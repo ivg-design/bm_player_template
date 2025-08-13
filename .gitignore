@@ -1,0 +1,11 @@
+#claude
+.claude
+
+#node
+node_modules
+
+#macos
+.DS_Store
+
+#vscode
+.vscode

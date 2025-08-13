@@ -1,0 +1,16 @@
+{
+  "name": "bm-player-template",
+  "version": "1.0.0",
+  "description": "Bodymovin player template builder",
+  "main": "scripts/build.js",
+  "scripts": {
+    "build": "node scripts/build.js"
+  },
+  "author": "IVG Design",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "inquirer": "^8.2.6",
+    "loglevel": "^1.9.1"
+  }
+}
