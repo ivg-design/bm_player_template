@@ -1,0 +1,2028 @@
+<html xmlns="http://www.w3.org/1999/xhtml">
+	<meta charset="UTF-8" />
+	<head>
+		<title>Lottie Animation Player</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			body {
+				font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+				background-color: #ffffff;
+				height: 100vh;
+				overflow: hidden;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				position: relative;
+			}
+
+			#lottie-wrapper {
+				width: 100%;
+				height: 100%;
+				position: relative;
+				overflow: hidden;
+			}
+
+			#lottie-container {
+				width: 100%;
+				height: 100%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				transition: transform 0.3s ease;
+				transform-origin: center center;
+				cursor: move;
+			}
+
+			#lottie {
+				max-width: 100%;
+				max-height: 100%;
+				width: auto;
+				height: auto;
+			}
+
+			/* Control Panel */
+			.control-panel {
+				position: fixed;
+				bottom: 20px;
+				left: 50%;
+				transform: translateX(-50%);
+				background: rgba(30, 30, 30, 0.8);
+				backdrop-filter: blur(20px);
+				-webkit-backdrop-filter: blur(20px);
+				border-radius: 8px;
+				padding: 12px;
+				box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+				transition: all 0.3s ease;
+				z-index: 1000;
+				max-width: 90%;
+				width: auto;
+			}
+
+			.control-panel.collapsed {
+				padding: 0;
+				min-width: auto;
+				width: 40px;
+				height: 40px;
+				overflow: hidden;
+				background: transparent;
+				backdrop-filter: none;
+				box-shadow: none;
+			}
+
+			.control-panel.collapsed .controls-wrapper {
+				opacity: 0;
+				pointer-events: none;
+			}
+
+			/* Toggle Button */
+			.toggle-btn {
+				position: absolute;
+				top: 8px;
+				right: 8px;
+				background: rgba(60, 60, 60, 0.95);
+				border: 1px solid rgba(255, 255, 255, 0.3);
+				color: #fff;
+				width: 24px;
+				height: 24px;
+				border-radius: 6px;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all 0.2s;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+			}
+
+			.toggle-btn:hover {
+				background: rgba(80, 80, 80, 0.95);
+				transform: scale(1.1);
+			}
+
+			.toggle-btn svg {
+				width: 12px;
+				height: 12px;
+				transition: transform 0.3s;
+			}
+
+			.control-panel.collapsed .mini-btn {
+				display: none;
+			}
+
+			.control-panel.collapsed .toggle-btn {
+				position: fixed;
+				background: rgba(60, 60, 60, 0.95);
+				display: flex;
+			}
+
+			/* Mini Mode Button */
+			.mini-btn {
+				position: absolute;
+				top: 8px;
+				right: 36px;
+				background: rgba(60, 60, 60, 0.95);
+				border: 1px solid rgba(255, 255, 255, 0.3);
+				color: #fff;
+				width: 24px;
+				height: 24px;
+				border-radius: 6px;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all 0.2s;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+			}
+
+			/* Float buttons outside panel in mini mode */
+			.control-panel.mini .toggle-btn,
+			.control-panel.mini .mini-btn {
+				top: -30px;
+			}
+
+			.mini-btn:hover {
+				background: rgba(80, 80, 80, 0.95);
+				transform: scale(1.1);
+			}
+
+			.mini-btn svg {
+				width: 12px;
+				height: 12px;
+			}
+
+			/* Mini Mode Styles */
+			.control-panel.mini .top-panels-row {
+				max-height: 0;
+				opacity: 0;
+				overflow: hidden;
+				margin: 0;
+				transition: max-height 0.5s ease, opacity 0.5s ease, margin 0.5s ease;
+			}
+
+			.control-panel.mini .micro-panel:nth-child(4) {
+				max-height: 0;
+				opacity: 0;
+				overflow: hidden;
+				padding: 0;
+				margin: 0;
+				transition: max-height 0.5s ease, opacity 0.5s ease, padding 0.5s ease, margin 0.5s ease;
+			}
+
+			.control-panel.mini .progress-wrapper {
+				justify-content: center;
+			}
+
+			.control-panel.mini .progress-container {
+				height: 24px;
+				border-radius: 4px;
+				transition: height 0.5s ease, border-radius 0.5s ease;
+			}
+
+			.control-panel.mini .progress-bar {
+				transition: none;
+				border-radius: 3px;
+			}
+
+			.control-panel.mini .progress-thumb {
+				top: -3px;
+				bottom: -3px;
+				width: 14px;
+				height: auto;
+				transition: width 0.5s ease;
+			}
+
+			.control-panel.mini .progress-thumb::before {
+				width: 8px;
+				height: 24px;
+			}
+
+			.control-panel.mini .progress-info {
+				display: none;
+			}
+
+			.control-panel.mini .controls-panel {
+				justify-content: center;
+			}
+
+			/* Mini mode compact styles */
+			.control-panel.mini {
+				padding: 6px;
+			}
+
+			.control-panel.mini .controls-wrapper {
+				gap: 3px;
+			}
+
+			.control-panel.mini .micro-panel {
+				padding: 5px;
+			}
+
+			.control-panel.mini .top-panels-row .micro-panel {
+				padding: 4px;
+			}
+
+			.control-panel.mini .progress-panel {
+				padding: 3px 5px;
+			}
+
+			.control-panel.mini .top-panels-row {
+				gap: 3px;
+			}
+
+			.control-panel.mini .control-btn {
+				height: 24px;
+				border-radius: 4px;
+			}
+
+			.control-panel.mini .loop-btn {
+				height: 24px;
+				border-radius: 4px;
+			}
+
+			.control-panel.mini .jump-btn {
+				height: 24px;
+				padding: 0 12px;
+				border-radius: 4px;
+				font-size: 11px;
+			}
+
+			.control-panel.mini .jump-input {
+				height: 24px;
+				padding: 0 8px;
+				font-size: 11px;
+				border-radius: 4px;
+				width: 120px;
+			}
+
+			.control-panel.mini .control-btn svg,
+			.control-panel.mini .loop-btn svg {
+				width: 14px;
+				height: 14px;
+			}
+
+			/* Transition animations for expanding from mini mode */
+			.control-panel:not(.mini) .top-panels-row {
+				max-height: 200px;
+				opacity: 1;
+				transition: max-height 0.5s ease, opacity 0.5s ease, margin 0.5s ease;
+			}
+
+			.control-panel:not(.mini) .micro-panel:nth-child(4) {
+				max-height: 200px;
+				opacity: 1;
+				transition: max-height 0.5s ease, opacity 0.5s ease, padding 0.5s ease, margin 0.5s ease;
+			}
+
+			.control-panel:not(.mini) .progress-container {
+				width: 100%;
+				transition: width 0.5s ease;
+			}
+
+			.control-panel:not(.mini) .progress-wrapper {
+				transition: all 0.5s ease;
+			}
+
+			/* Controls Wrapper */
+			.controls-wrapper {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+
+			/* Micro Panel Style */
+			.micro-panel {
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 6px;
+				padding: 10px;
+			}
+
+			/* Remove double padding */
+			.micro-panel:first-child {
+				margin-top: -2px;
+			}
+
+			.micro-panel:last-child {
+				margin-bottom: -2px;
+			}
+
+			/* Top Panels Row */
+			.top-panels-row {
+				display: flex;
+				gap: 8px;
+			}
+
+			.top-panels-row .micro-panel:first-child {
+				width: 60%;
+			}
+
+			.top-panels-row .micro-panel:last-child {
+				width: 40%;
+			}
+
+			/* Position Display */
+			.position-display {
+				display: flex;
+				gap: 10px;
+				align-items: center;
+				justify-content: space-between;
+				padding: 0 5px;
+			}
+
+			.main-position-wrapper {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				flex: 0 0 auto;
+			}
+
+			.position-icon {
+				width: 30px;
+				height: 30px;
+				flex-shrink: 0;
+				padding: 4px;
+				background: rgba(255, 255, 255, 0.08);
+				border-radius: 5px;
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+				transition: all 0.2s;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.main-position {
+				font-size: 28px;
+				font-weight: 900;
+				color: #00e676;
+				letter-spacing: 2px;
+				min-width: 120px;
+				width: 120px;
+				text-align: left;
+				font-stretch: condensed;
+				font-family: monospace;
+				white-space: nowrap;
+			}
+
+			.sub-positions {
+				background: rgba(255, 255, 255, 0.06);
+				border-radius: 5px;
+				padding: 4px 8px;
+				display: flex;
+				flex-direction: column;
+				gap: 2px;
+				box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+				flex-shrink: 0;
+				min-width: 100px;
+				width: 100px;
+			}
+
+			.sub-position {
+				font-size: 11px;
+				color: #aaa;
+				opacity: 0.9;
+				font-weight: 600;
+				letter-spacing: 0.5px;
+				font-family: monospace;
+				white-space: nowrap;
+				display: flex;
+				align-items: center;
+				gap: 4px;
+			}
+
+			.sub-position svg {
+				width: 10px;
+				height: 10px;
+				opacity: 0.6;
+			}
+
+			/* Info Section */
+			.info-section {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				padding: 0 5px;
+				gap: 6px;
+			}
+
+			.info-row {
+				display: flex;
+				gap: 0px;
+			}
+
+			.info-item {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				flex: 1;
+			}
+
+			.info-icon {
+				width: 16px;
+				height: 16px;
+				flex-shrink: 0;
+				color: #888;
+				opacity: 0.8;
+			}
+
+			.info-label {
+				display: none;
+			}
+
+			.info-value {
+				font-size: 13px;
+				color: #fff;
+				font-weight: 600;
+				white-space: nowrap;
+			}
+
+			.info-unit {
+				font-size: 11px;
+				color: #aaa;
+				font-style: italic;
+				margin-left: 3px;
+				opacity: 0.85;
+			}
+
+			/* Controls Panel */
+			.controls-panel {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+				justify-content: space-between;
+			}
+
+			/* Standard button style for all controls */
+			.control-btn {
+				background: rgba(255, 255, 255, 0.1);
+				border: none;
+				color: #fff;
+				height: 36px;
+				width: 36px;
+				border-radius: 8px;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all 0.2s;
+				flex-shrink: 0;
+			}
+
+			/* Triple width for play/pause/stop */
+			.control-btn#playPauseBtn,
+			.control-btn[onclick='stop()'] {
+				width: 108px; /* 36 * 3 */
+			}
+
+			/* Double width for restart */
+			.control-btn[onclick='restart()'] {
+				width: 72px; /* 36 * 2 */
+			}
+
+			/* Double width for loop button */
+			.loop-btn {
+				background: rgba(255, 255, 255, 0.1);
+				border: none;
+				color: #fff;
+				height: 36px;
+				width: 72px; /* 36 * 2 */
+				border-radius: 8px;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all 0.2s;
+				flex-shrink: 0;
+			}
+
+			.loop-btn[data-mode='loop'] svg {
+				fill: #4caf50;
+				filter: brightness(1.3);
+			}
+
+			.loop-btn[data-mode='pingpong'] svg {
+				fill: #ff9800;
+				filter: brightness(1.3);
+			}
+
+			.loop-btn[data-mode='none'] svg {
+				fill: #ef5350;
+				filter: brightness(1.3);
+			}
+
+			.jump-btn {
+				background: rgba(255, 255, 255, 0.1);
+				border: none;
+				color: #fff;
+				height: 36px;
+				padding: 0 16px;
+				border-radius: 8px;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all 0.2s;
+				flex-shrink: 0;
+				font-weight: 600;
+			}
+
+			.control-btn:hover,
+			.loop-btn:hover,
+			.jump-btn:hover {
+				background: rgba(255, 255, 255, 0.2);
+				transform: scale(1.05);
+			}
+
+			.control-btn:active,
+			.loop-btn:active,
+			.jump-btn:active {
+				transform: scale(0.95);
+			}
+
+			/* State-based colors */
+			.control-btn#playPauseBtn.playing svg {
+				fill: #fbbf24; /* Yellow for pause icon when playing */
+				filter: brightness(1.3);
+			}
+
+			.control-btn#playPauseBtn.paused svg {
+				fill: #4caf50; /* Green for play icon when paused */
+				filter: brightness(1.3);
+			}
+
+			.control-btn[onclick='stop()'].stopped svg {
+				fill: #ef5350;
+				filter: brightness(1.3);
+			}
+
+			.control-btn[onclick='restart()'] svg {
+				fill: #2196f3;
+				filter: brightness(1.2);
+			}
+
+			/* Playback Controls */
+			.playback-controls {
+				display: flex;
+				gap: 6px;
+				align-items: center;
+			}
+
+			.control-btn svg,
+			.loop-btn svg {
+				width: 18px;
+				height: 18px;
+			}
+
+			/* Progress Bar */
+			.progress-panel {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+
+			.progress-wrapper {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+			}
+
+			.progress-container {
+				position: relative;
+				flex: 1;
+				height: 40px;
+				background: linear-gradient(90deg, #667eea5a 0%, #764ba27c 100%);
+				border: 2px solid rgba(255, 255, 255, 0.08);
+				border-radius: 8px;
+				cursor: pointer;
+				overflow: visible;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+			}
+
+			.progress-bar {
+				position: absolute;
+				left: 0;
+				top: 0;
+				height: 100%;
+				width: 0%;
+				background: linear-gradient(90deg, #6c86f8 0%, #8f58c6 100%);
+				border-radius: 6px;
+				pointer-events: none;
+				transition: none !important;
+			}
+
+			.progress-thumb {
+				position: absolute;
+				top: -5px;
+				bottom: -5px;
+				width: 20px;
+				left: 0%;
+				transform: translateX(-50%);
+				background: #3f3f3f;
+				border: 1px solid rgb(62, 62, 62);
+				border-radius: 4px;
+				box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+				cursor: grab;
+				z-index: 10;
+				pointer-events: all;
+			}
+
+			.progress-thumb::before {
+				content: '';
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				width: 10px;
+				height: 35px;
+				background: rgba(102, 126, 234, 0.5);
+				border-radius: 2px;
+			}
+
+			.progress-thumb:hover {
+				box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+			}
+
+			.progress-thumb:active {
+				cursor: grabbing;
+			}
+
+			.progress-info {
+				display: flex;
+				justify-content: space-between;
+				color: #888;
+				font-size: 11px;
+			}
+
+			.control-panel.mini .progress-unit-btn {
+				width: 24px;
+				height: 24px;
+				border-radius: 4px;
+				transition: all 0.5s ease;
+			}
+
+			.control-panel.mini .progress-unit-btn svg {
+				width: 12px;
+				height: 12px;
+			}
+
+			.progress-readout {
+				background: rgba(255, 255, 255, 0.05);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 4px;
+				padding: 0 8px;
+				color: #00e676;
+				font-size: 11px;
+				font-weight: 600;
+				font-family: monospace;
+				width: 85px;
+				height: 24px;
+				display: none;
+				align-items: center;
+				justify-content: flex-start;
+				white-space: nowrap;
+			}
+
+			.control-panel.mini .progress-readout {
+				display: flex;
+			}
+
+			.control-panel.mini .progress-wrapper {
+				gap: 6px;
+			}
+
+			.progress-unit-btn {
+				background: rgba(255, 255, 255, 0.1);
+				border: none;
+				color: #fff;
+				width: 32px;
+				height: 32px;
+				border-radius: 6px;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				transition: all 0.2s;
+				position: relative;
+			}
+
+			.progress-unit-btn:hover {
+				background: rgba(255, 255, 255, 0.2);
+				transform: scale(1.05);
+			}
+
+			.progress-unit-btn:active {
+				transform: scale(0.9);
+				background: rgba(102, 126, 234, 0.3);
+			}
+
+			.progress-unit-btn.percent svg {
+				filter: brightness(1.4);
+			}
+
+			.progress-unit-btn.time svg {
+				filter: brightness(1.3);
+			}
+
+			.progress-unit-btn.frame svg {
+				filter: brightness(1.3);
+			}
+
+			.progress-unit-btn svg {
+				width: 16px;
+				height: 16px;
+				transition: all 0.2s;
+			}
+
+			.mode-btn {
+				padding: 5px 10px;
+				background: rgba(255, 255, 255, 0.1);
+				border: none;
+				color: #888;
+				border-radius: 4px;
+				cursor: pointer;
+				font-size: 11px;
+				transition: all 0.2s;
+			}
+
+			.mode-btn.active {
+				background: rgba(102, 126, 234, 0.3);
+				color: #fff;
+			}
+
+			.mode-btn:hover {
+				background: rgba(255, 255, 255, 0.2);
+			}
+
+			/* Jump to Controls */
+			.jump-controls {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+				flex: 0 0 auto;
+			}
+
+			.jump-input {
+				background: rgba(255, 255, 255, 0.05);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				color: #fff;
+				height: 36px;
+				padding: 0 12px;
+				border-radius: 8px;
+				font-size: 12px;
+				width: 140px;
+			}
+
+			.jump-input:focus {
+				outline: none;
+				border-color: #667eea;
+				background: rgba(255, 255, 255, 0.08);
+			}
+
+			.jump-btn {
+				font-size: 12px;
+				font-weight: 600;
+			}
+
+			/* Settings Section */
+			.settings-section {
+				display: flex;
+				gap: 15px;
+				flex-wrap: wrap;
+			}
+
+			.setting-group {
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+			}
+
+			.setting-group:nth-child(1) {
+				flex: 0 0 140px;
+			}
+
+			.setting-group:nth-child(2) {
+				flex: 0 0 100px;
+			}
+
+			.setting-group:nth-child(3) {
+				flex: 1;
+				min-width: 180px;
+			}
+
+			.setting-label {
+				display: none;
+			}
+
+			.slider-container {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				position: relative;
+				padding: 2px 0;
+			}
+
+			.slider {
+				flex: 1;
+				-webkit-appearance: none;
+				appearance: none;
+				height: 30px;
+				background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+				background-origin: border-box;
+				background-clip: content-box;
+				padding: 0;
+				border: 2px solid rgba(255, 255, 255, 0.08);
+				border-radius: 6px;
+				outline: none;
+				position: relative;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+				overflow: visible;
+			}
+
+			.slider::before {
+				content: attr(data-label);
+				position: absolute;
+				left: 0;
+				right: 0;
+				top: 50%;
+				transform: translateY(-50%);
+				font-size: 20px;
+				font-weight: 800;
+				color: rgba(255, 255, 255, 0.3);
+				text-transform: uppercase;
+				letter-spacing: 4px;
+				pointer-events: none;
+				z-index: 2;
+				text-align: center;
+				height: 100%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.slider#zoomSlider {
+				flex: 1;
+				min-width: 150px;
+				height: 30px;
+			}
+
+			.slider#speedSlider {
+				width: 100px;
+				height: 30px;
+			}
+
+			.slider::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				appearance: none;
+				width: 18px;
+				height: 36px;
+				background: rgba(255, 255, 255, 0.05);
+				backdrop-filter: blur(1px);
+				-webkit-backdrop-filter: blur(1px);
+				border: 5px solid #3f3f3f;
+				border-radius: 4px;
+				cursor: pointer;
+				box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+				position: relative;
+				z-index: 3;
+			}
+
+			.slider::-webkit-slider-thumb:hover {
+				box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+				border-color: #353535;
+				backdrop-filter: blur(1.5px);
+				-webkit-backdrop-filter: blur(1.5px);
+			}
+
+			.slider::-moz-range-thumb {
+				width: 18px;
+				height: 36px;
+				background: rgba(255, 255, 255, 0.05);
+				backdrop-filter: blur(1px);
+				-webkit-backdrop-filter: blur(1px);
+				border: 5px solid #3f3f3f;
+				border-radius: 4px;
+				cursor: pointer;
+				box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
+				position: relative;
+				z-index: 3;
+			}
+
+			.slider::-moz-range-thumb:hover {
+				box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+				border-color: #353535;
+				backdrop-filter: blur(12px);
+				-webkit-backdrop-filter: blur(12px);
+			}
+
+			/* Settings Panel */
+			.settings-panel {
+				display: flex;
+				gap: 15px;
+				align-items: center;
+			}
+
+			/* Position Joystick */
+			.position-control {
+				position: relative;
+				width: 60px;
+				height: 30px;
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 8px;
+				border: 2px solid rgba(102, 126, 234, 0.3);
+				cursor: move;
+				transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+				transform-origin: center center;
+				flex-shrink: 0;
+				align-self: center;
+				box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.1);
+			}
+
+			.position-control.active {
+				transform: scale(2);
+				border-color: rgba(102, 126, 234, 0.5);
+				z-index: 100;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+			}
+
+			.position-stick {
+				position: absolute;
+				width: 14px;
+				height: 14px;
+				background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+				border: 2px solid rgba(255, 255, 255, 0.8);
+				border-radius: 50%;
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%);
+				transition: none;
+				pointer-events: none;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+				cursor: grab;
+			}
+
+			.position-control:active .position-stick {
+				box-shadow: 0 3px 12px rgba(102, 126, 234, 0.5);
+			}
+
+			.slider-value {
+				font-size: 11px;
+				color: #fff;
+				width: 50px;
+				text-align: center;
+				background: rgba(102, 126, 234, 0.2);
+				padding: 4px 6px;
+				border-radius: 4px;
+				border: 1px solid rgba(102, 126, 234, 0.3);
+				flex-shrink: 0;
+			}
+
+			.color-input {
+				width: 100%;
+				height: 30px;
+				border: 2px solid rgba(255, 255, 255, 0.08);
+				border-radius: 6px;
+				cursor: pointer;
+				background: transparent;
+				box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+				transition: all 0.2s;
+				outline: none;
+				position: relative;
+			}
+
+			.color-input::-webkit-color-swatch-wrapper {
+				padding: 0;
+			}
+
+			.color-input::-webkit-color-swatch {
+				border: none;
+				border-radius: 4px;
+			}
+
+			.color-input:hover {
+				transform: scale(1.05);
+				box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+			}
+
+			.color-input::after {
+				content: 'BG';
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%);
+				font-size: 20px;
+				font-weight: 800;
+				mix-blend-mode: difference;
+				color: white;
+				opacity: 0.3;
+				pointer-events: none;
+				text-transform: uppercase;
+				letter-spacing: 4px;
+			}
+
+			/* Responsive */
+			@media (max-width: 600px) {
+				.control-panel {
+					bottom: 10px;
+					min-width: 300px;
+					padding: 15px;
+				}
+
+				.info-section {
+					grid-template-columns: repeat(2, 1fr);
+				}
+
+				.settings-section {
+					flex-direction: column;
+				}
+			}
+		</style>
+		<!-- Load Lottie library -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+	</head>
+	<body>
+		<!-- build:scripto -->
+		<script></script>
+		<!-- endbuild -->
+
+		<div id="lottie-container">
+			<div id="lottie"></div>
+		</div>
+
+		<!-- Control Panel -->
+		<div class="control-panel" id="controlPanel">
+			<button class="mini-btn" onclick="toggleMiniMode()" title="Mini Mode">
+				<svg fill="#cccccc" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" id="miniIcon">
+					<path d="M64 488C64 474.7 74.7 464 88 464L552 464C565.3 464 576 474.7 576 488C576 501.3 565.3 512 552 512L88 512C74.7 512 64 501.3 64 488z" />
+				</svg>
+			</button>
+			<button class="toggle-btn" onclick="togglePanel()">
+				<svg fill="#cccccc" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" id="toggleIcon">
+					<path
+						d="M160 96C124.7 96 96 124.7 96 160L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 160C544 124.7 515.3 96 480 96L160 96zM232 296L408 296C421.3 296 432 306.7 432 320C432 333.3 421.3 344 408 344L232 344C218.7 344 208 333.3 208 320C208 306.7 218.7 296 232 296z" />
+				</svg>
+			</button>
+
+			<div class="controls-wrapper">
+				<!-- Top Row: Split Panels -->
+				<div class="top-panels-row">
+					<!-- Panel 1A: Dynamic Position Display -->
+					<div class="micro-panel">
+						<div class="position-display">
+							<div class="main-position-wrapper">
+								<div class="position-icon" id="positionIcon">
+									<svg viewBox="0 0 20 20" width="18" height="18">
+										<text x="10" y="14" text-anchor="middle" font-size="14" font-weight="900" fill="#00e676">%</text>
+									</svg>
+								</div>
+								<div class="main-position" id="mainPosition">00.0</div>
+							</div>
+							<div class="sub-positions">
+								<div class="sub-position" id="subPosition1">00:00:00</div>
+								<div class="sub-position" id="subPosition2">000000</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Panel 1B: Animation Info -->
+					<div class="micro-panel">
+						<div class="info-section">
+							<div class="info-row">
+								<div class="info-item">
+									<svg class="info-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#888">
+										<path
+											d="M320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320C64 178.6 178.6 64 320 64zM296 184L296 320C296 328 300 335.5 306.7 340L402.7 404C413.7 411.4 428.6 408.4 436 397.3C443.4 386.2 440.4 371.4 429.3 364L344 307.2L344 184C344 170.7 333.3 160 320 160C306.7 160 296 170.7 296 184z" />
+									</svg>
+									<span class="info-label">DURATION:</span>
+									<span class="info-value" id="duration">0s</span>
+								</div>
+								<div class="info-item">
+									<svg class="info-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#888">
+										<path
+											d="M96 160C96 124.7 124.7 96 160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160zM144 432L144 464C144 472.8 151.2 480 160 480L192 480C200.8 480 208 472.8 208 464L208 432C208 423.2 200.8 416 192 416L160 416C151.2 416 144 423.2 144 432zM448 416C439.2 416 432 423.2 432 432L432 464C432 472.8 439.2 480 448 480L480 480C488.8 480 496 472.8 496 464L496 432C496 423.2 488.8 416 480 416L448 416zM144 304L144 336C144 344.8 151.2 352 160 352L192 352C200.8 352 208 344.8 208 336L208 304C208 295.2 200.8 288 192 288L160 288C151.2 288 144 295.2 144 304zM448 288C439.2 288 432 295.2 432 304L432 336C432 344.8 439.2 352 448 352L480 352C488.8 352 496 344.8 496 336L496 304C496 295.2 488.8 288 480 288L448 288zM144 176L144 208C144 216.8 151.2 224 160 224L192 224C200.8 224 208 216.8 208 208L208 176C208 167.2 200.8 160 192 160L160 160C151.2 160 144 167.2 144 176zM448 160C439.2 160 432 167.2 432 176L432 208C432 216.8 439.2 224 448 224L480 224C488.8 224 496 216.8 496 208L496 176C496 167.2 488.8 160 480 160L448 160z" />
+									</svg>
+									<span class="info-label">FRAMES:</span>
+									<span class="info-value" id="totalFrames">0</span>
+								</div>
+							</div>
+							<div class="info-row">
+								<div class="info-item">
+									<svg class="info-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#888">
+										<path
+											d="M64 320C64 178.6 178.6 64 320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320zM384 416C384 389.1 367.5 366.1 344 356.7L344 184C344 170.7 333.3 160 320 160C306.7 160 296 170.7 296 184L296 356.7C272.5 366.2 256 389.2 256 416C256 451.3 284.7 480 320 480C355.3 480 384 451.3 384 416zM208 240C225.7 240 240 225.7 240 208C240 190.3 225.7 176 208 176C190.3 176 176 190.3 176 208C176 225.7 190.3 240 208 240zM192 320C192 302.3 177.7 288 160 288C142.3 288 128 302.3 128 320C128 337.7 142.3 352 160 352C177.7 352 192 337.7 192 320zM480 352C497.7 352 512 337.7 512 320C512 302.3 497.7 288 480 288C462.3 288 448 302.3 448 320C448 337.7 462.3 352 480 352zM464 208C464 190.3 449.7 176 432 176C414.3 176 400 190.3 400 208C400 225.7 414.3 240 432 240C449.7 240 464 225.7 464 208z" />
+									</svg>
+									<span class="info-label">FPS:</span>
+									<span class="info-value" id="fps">0</span>
+								</div>
+								<div class="info-item">
+									<svg class="info-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#888">
+										<path
+											d="M264 96L120 96C106.7 96 96 106.7 96 120L96 264C96 273.7 101.8 282.5 110.8 286.2C119.8 289.9 130.1 287.8 137 281L177 241L256 320L177 399L137 359C130.1 352.1 119.8 350.1 110.8 353.8C101.8 357.5 96 366.3 96 376L96 520C96 533.3 106.7 544 120 544L264 544C273.7 544 282.5 538.2 286.2 529.2C289.9 520.2 287.9 509.9 281 503L241 463L320 384L399 463L359 503C352.1 509.9 350.1 520.2 353.8 529.2C357.5 538.2 366.3 544 376 544L520 544C533.3 544 544 533.3 544 520L544 376C544 366.3 538.2 357.5 529.2 353.8C520.2 350.1 509.9 352.1 503 359L463 399L384 320L463 241L503 281C509.9 287.9 520.2 289.9 529.2 286.2C538.2 282.5 544 273.7 544 264L544 120C544 106.7 533.3 96 520 96L376 96C366.3 96 357.5 101.8 353.8 110.8C350.1 119.8 352.2 130.1 359 137L399 177L320 256L241 177L281 137C287.9 130.1 289.9 119.8 286.2 110.8C282.5 101.8 273.7 96 264 96z" />
+									</svg>
+									<span class="info-label">SIZE:</span>
+									<span class="info-value" id="dimensions">0x0</span>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Panel 2: Playback Controls -->
+				<div class="micro-panel">
+					<div class="controls-panel">
+						<!-- Playback Controls -->
+						<div class="playback-controls">
+							<button class="control-btn" onclick="restart()" title="Restart">
+								<svg fill="#2196F3" viewBox="0 0 640 640">
+									<path
+										d="M364.2 82.4C376.2 87.4 384 99 384 112L384 192L432 192C529.2 192 608 270.8 608 368C608 481.3 526.5 531.9 507.8 542.1C505.3 543.5 502.5 544 499.7 544C488.8 544 480 535.1 480 524.3C480 516.8 484.3 509.9 489.8 504.8C499.2 496 512 478.4 512 448.1C512 395.1 469 352.1 416 352.1L384 352.1L384 432.1C384 445 376.2 456.7 364.2 461.7C352.2 466.7 338.5 463.9 329.3 454.8L169.3 294.8C156.8 282.3 156.8 262 169.3 249.5L329.3 89.5C338.5 80.3 352.2 77.6 364.2 82.6zM237.6 87.1C247 96.5 247 111.7 237.6 121L86.6 272L237.6 422.9C247 432.3 247 447.5 237.6 456.8C228.2 466.1 213 466.2 203.7 456.8L42 295.2C35.6 289.2 32 280.8 32 272C32 263.2 35.6 254.8 42 248.8L203.6 87.1C213 77.7 228.2 77.7 237.5 87.1z" />
+								</svg>
+							</button>
+							<button class="control-btn" onclick="togglePlay()" id="playPauseBtn" title="Play/Pause">
+								<svg fill="#4caf50" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+								</svg>
+							</button>
+							<button class="control-btn" onclick="stop()" title="Stop">
+								<svg fill="#ef5350" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clip-rule="evenodd"></path>
+								</svg>
+							</button>
+						</div>
+
+						<!-- Loop Mode Button (Icons Only) -->
+						<button class="loop-btn" onclick="toggleLoopMode()" id="loopBtn" data-mode="loop" title="Loop Mode">
+							<svg id="loopIcon" fill="#4caf50" viewBox="0 0 20 20">
+								<path
+									fill-rule="evenodd"
+									d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+									clip-rule="evenodd"></path>
+							</svg>
+						</button>
+
+						<!-- Jump Controls -->
+						<div class="jump-controls">
+							<input type="text" class="jump-input" id="jumpInput" placeholder="50% | 01:30 | 120" title="Jump to: percentage (50%), time (01:30 or 01:30:15), or frame (120)" />
+							<button class="jump-btn" onclick="jumpTo()">GO</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Panel 3: Progress Bar -->
+				<div class="micro-panel progress-panel">
+					<div class="progress-wrapper">
+						<div class="progress-container" id="progressContainer" onmousedown="startProgressDrag(event)">
+							<div class="progress-bar" id="progressBar"></div>
+							<div class="progress-thumb" id="progressThumb"></div>
+						</div>
+						<span class="progress-readout" id="progressReadout">0%</span>
+						<button class="progress-unit-btn percent" onclick="cycleProgressMode()" id="progressUnitBtn" title="Change Units">
+							<svg id="unitIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#00e676">
+								<path
+									d="M288 192C288 139 245 96 192 96C139 96 96 139 96 192C96 245 139 288 192 288C245 288 288 245 288 192zM544 448C544 395 501 352 448 352C395 352 352 395 352 448C352 501 395 544 448 544C501 544 544 501 544 448zM534.6 150.6C547.1 138.1 547.1 117.8 534.6 105.3C522.1 92.8 501.8 92.8 489.3 105.3L105.3 489.3C92.8 501.8 92.8 522.1 105.3 534.6C117.8 547.1 138.1 547.1 150.6 534.6L534.6 150.6z" />
+							</svg>
+						</button>
+					</div>
+					<div class="progress-info">
+						<span id="currentProgress">0%</span>
+						<span id="totalProgress">100%</span>
+					</div>
+				</div>
+
+				<!-- Panel 4: Settings (Speed/Color/Zoom/Position) -->
+				<div class="micro-panel">
+					<div class="settings-panel">
+						<!-- Speed Slider -->
+						<div class="setting-group">
+							<div class="setting-label">Speed</div>
+							<div class="slider-container">
+								<input type="range" class="slider" id="speedSlider" data-label="Speed" min="0.25" max="2" step="0.25" value="1" oninput="updateSpeed(this.value)" />
+								<span class="slider-value" id="speedValue">1x</span>
+							</div>
+						</div>
+
+						<!-- Background Color -->
+						<div class="setting-group">
+							<div class="setting-label">Background</div>
+							<input type="color" class="color-input" id="bgColor" value="#ffffff" oninput="updateBackground(this.value)" />
+						</div>
+
+						<!-- Zoom Slider -->
+						<div class="setting-group">
+							<div class="setting-label">Zoom</div>
+							<div class="slider-container">
+								<input type="range" class="slider" id="zoomSlider" data-label="Zoom" min="0" max="300" value="100" step="1" oninput="updateZoom(this.value)" />
+								<span class="slider-value" id="zoomValue">100%</span>
+							</div>
+						</div>
+
+						<!-- Position Joystick -->
+						<div class="position-control" id="positionControl">
+							<div class="position-stick" id="positionStick"></div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<script>
+			// Mock Lottie animation data - this would be replaced by the bodymovin plugin
+			var animationData = {
+				v: '5.7.4',
+				fr: 30,
+				ip: 0,
+				op: 120,
+				w: 1920,
+				h: 1080,
+				nm: 'Mock Animation',
+				ddd: 0,
+				assets: [],
+				layers: [
+					{
+						ddd: 0,
+						ind: 1,
+						ty: 4,
+						nm: 'Circle',
+						sr: 1,
+						ks: {
+							o: { a: 0, k: 100 },
+							r: { a: 0, k: 0 },
+							p: {
+								a: 1,
+								k: [
+									{
+										i: { x: 0.667, y: 1 },
+										o: { x: 0.333, y: 0 },
+										t: 0,
+										s: [300, 540, 0],
+										to: [220, 0, 0],
+										ti: [-220, 0, 0],
+									},
+									{
+										i: { x: 0.667, y: 1 },
+										o: { x: 0.333, y: 0 },
+										t: 60,
+										s: [1620, 540, 0],
+										to: [0, 0, 0],
+										ti: [0, 0, 0],
+									},
+									{
+										t: 120,
+										s: [300, 540, 0],
+									},
+								],
+							},
+							a: { a: 0, k: [0, 0, 0] },
+							s: { a: 0, k: [100, 100, 100] },
+						},
+						ao: 0,
+						shapes: [
+							{
+								ty: 'gr',
+								it: [
+									{
+										d: 1,
+										ty: 'el',
+										s: { a: 0, k: [200, 200] },
+										p: { a: 0, k: [0, 0] },
+										nm: 'Ellipse Path 1',
+									},
+									{
+										ty: 'fl',
+										c: { a: 0, k: [0.2, 0.4, 1, 1] },
+										o: { a: 0, k: 100 },
+										r: 1,
+										bm: 0,
+										nm: 'Fill 1',
+									},
+									{
+										ty: 'tr',
+										p: { a: 0, k: [0, 0] },
+										a: { a: 0, k: [0, 0] },
+										s: { a: 0, k: [100, 100] },
+										r: { a: 0, k: 0 },
+										o: { a: 0, k: 100 },
+										sk: { a: 0, k: 0 },
+										sa: { a: 0, k: 0 },
+										nm: 'Transform',
+									},
+								],
+								nm: 'Ellipse 1',
+							},
+						],
+						ip: 0,
+						op: 120,
+						st: 0,
+						bm: 0,
+					},
+					{
+						ddd: 0,
+						ind: 2,
+						ty: 4,
+						nm: 'Square',
+						sr: 1,
+						ks: {
+							o: { a: 0, k: 100 },
+							r: {
+								a: 1,
+								k: [
+									{
+										i: { x: [0.833], y: [0.833] },
+										o: { x: [0.167], y: [0.167] },
+										t: 0,
+										s: [0],
+									},
+									{
+										t: 120,
+										s: [360],
+									},
+								],
+							},
+							p: { a: 0, k: [960, 540, 0] },
+							a: { a: 0, k: [0, 0, 0] },
+							s: {
+								a: 1,
+								k: [
+									{
+										i: { x: [0.667, 0.667, 0.667], y: [1, 1, 1] },
+										o: { x: [0.333, 0.333, 0.333], y: [0, 0, 0] },
+										t: 0,
+										s: [50, 50, 100],
+									},
+									{
+										i: { x: [0.667, 0.667, 0.667], y: [1, 1, 1] },
+										o: { x: [0.333, 0.333, 0.333], y: [0, 0, 0] },
+										t: 60,
+										s: [150, 150, 100],
+									},
+									{
+										t: 120,
+										s: [50, 50, 100],
+									},
+								],
+							},
+						},
+						ao: 0,
+						shapes: [
+							{
+								ty: 'gr',
+								it: [
+									{
+										ty: 'rc',
+										d: 1,
+										s: { a: 0, k: [150, 150] },
+										p: { a: 0, k: [0, 0] },
+										r: { a: 0, k: 10 },
+										nm: 'Rectangle Path 1',
+									},
+									{
+										ty: 'fl',
+										c: { a: 0, k: [1, 0.4, 0.2, 1] },
+										o: { a: 0, k: 100 },
+										r: 1,
+										bm: 0,
+										nm: 'Fill 1',
+									},
+									{
+										ty: 'tr',
+										p: { a: 0, k: [0, 0] },
+										a: { a: 0, k: [0, 0] },
+										s: { a: 0, k: [100, 100] },
+										r: { a: 0, k: 0 },
+										o: { a: 0, k: 100 },
+										sk: { a: 0, k: 0 },
+										sa: { a: 0, k: 0 },
+										nm: 'Transform',
+									},
+								],
+								nm: 'Rectangle 1',
+							},
+						],
+						ip: 0,
+						op: 120,
+						st: 0,
+						bm: 0,
+					},
+				],
+			};
+
+			// Global variables
+			var anim;
+			var progressMode = 'percent';
+			var isPlaying = false;
+			var isStopped = true;
+			var animationFrameId = null;
+			var loopMode = 'loop'; // 'none', 'loop', 'pingpong'
+			var isDraggingProgress = false;
+			var isDraggingPosition = false;
+			var positionOffset = { x: 0, y: 0 };
+			var playDirection = 1; // Track play direction for pingpong
+
+			// Initialize function to be called when DOM is ready
+			function initializeAnimation() {
+				// Initialize unit selector button to correct color state
+				const unitBtn = document.getElementById('progressUnitBtn');
+				const unitIcon = document.getElementById('unitIcon');
+				if (unitBtn && unitIcon) {
+					// Ensure the button has the correct class
+					unitBtn.classList.add('percent');
+					// Force a reflow to ensure CSS is applied
+					unitBtn.offsetHeight;
+				}
+
+				if (animationData && Object.keys(animationData).length > 0) {
+					var params = {
+						container: document.getElementById('lottie'),
+						renderer: 'svg',
+						loop: loopMode === 'loop',
+						autoplay: false,
+						animationData: animationData,
+					};
+
+					anim = lottie.loadAnimation(params);
+
+					// Wait for animation to be ready
+					anim.addEventListener('DOMLoaded', function () {
+						updateAnimationInfo();
+						startProgressUpdate();
+						updatePlayPauseButton(); // Update button to show correct initial state
+						updateStopButton(); // Update stop button initial state
+					});
+
+					// Handle animation complete event
+					anim.addEventListener('complete', function () {
+						if (loopMode === 'none') {
+							// For no loop, stop at the end
+							isPlaying = false;
+							updatePlayPauseButton();
+						}
+						// For regular loop, Lottie handles it automatically
+						// For pingpong, we handle it in updateProgress function
+					});
+				}
+			}
+
+			// Wait for DOM to be ready
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', initializeAnimation);
+			} else {
+				// DOM is already ready
+				initializeAnimation();
+			}
+
+			// Update animation info
+			function updateAnimationInfo() {
+				if (!anim) return;
+
+				const totalFrames = anim.totalFrames;
+				const frameRate = anim.frameRate;
+				const duration = totalFrames / frameRate;
+
+				// Format duration with unit styling
+				const durationValue = duration >= 60 ? Math.floor(duration / 60) + ':' + String(Math.floor(duration % 60)).padStart(2, '0') : duration.toFixed(2);
+				const durationUnit = duration >= 60 ? 'm:ss' : 's';
+				document.getElementById('duration').innerHTML = durationValue + '<span class="info-unit">' + durationUnit + '</span>';
+
+				// Add frame count with unit
+				document.getElementById('totalFrames').innerHTML = Math.floor(totalFrames) + '<span class="info-unit">fr</span>';
+
+				// Add fps with unit
+				document.getElementById('fps').innerHTML = Math.round(frameRate) + '<span class="info-unit">fps</span>';
+
+				// Get dimensions from animation data if available
+				if (anim.animationData) {
+					const w = anim.animationData.w || 0;
+					const h = anim.animationData.h || 0;
+					document.getElementById('dimensions').textContent = w + 'x' + h;
+				}
+			}
+
+			// Control functions
+			function togglePlay() {
+				if (!anim) return;
+				if (isPlaying) {
+					anim.pause();
+					isPlaying = false;
+				} else {
+					anim.play();
+					isPlaying = true;
+				}
+				isStopped = false;
+				updatePlayPauseButton();
+				updateStopButton();
+			}
+
+			function stop() {
+				if (!anim) return;
+				anim.stop();
+				isPlaying = false;
+				isStopped = true;
+				updatePlayPauseButton();
+				updateStopButton();
+			}
+
+			function restart() {
+				if (!anim) return;
+				anim.goToAndStop(0, true);
+				anim.play();
+				isPlaying = true;
+				isStopped = false;
+				updatePlayPauseButton();
+				updateStopButton();
+				updateProgress();
+			}
+
+			function updateStopButton() {
+				const stopBtn = document.querySelector('[onclick="stop()"]');
+				if (stopBtn) {
+					if (isStopped) {
+						stopBtn.classList.add('stopped');
+					} else {
+						stopBtn.classList.remove('stopped');
+					}
+				}
+			}
+
+			function updatePlayPauseButton() {
+				const btn = document.getElementById('playPauseBtn');
+				if (isPlaying) {
+					btn.classList.add('playing');
+					btn.classList.remove('paused');
+					btn.innerHTML = `<svg fill="#fbbf24" viewBox="0 0 20 20">
+						<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zM7 8a1 1 0 012 0v4a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v4a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+					</svg>`;
+				} else {
+					btn.classList.add('paused');
+					btn.classList.remove('playing');
+					btn.innerHTML = `<svg fill="#4caf50" viewBox="0 0 20 20">
+						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+					</svg>`;
+				}
+			}
+
+			// Progress functions
+			function startProgressUpdate() {
+				function update() {
+					updateProgress();
+					animationFrameId = requestAnimationFrame(update);
+				}
+				update();
+			}
+
+			function formatTime(frames, frameRate) {
+				const totalSeconds = frames / frameRate;
+				const minutes = Math.floor(totalSeconds / 60);
+				const seconds = Math.floor(totalSeconds % 60);
+				const frameNumber = Math.floor(frames % frameRate);
+				const mm = String(minutes).padStart(2, '0');
+				const ss = String(seconds).padStart(2, '0');
+				const ff = String(frameNumber).padStart(2, '0');
+				// Return mm:ss:ff format
+				return `${mm}:${ss}:${ff}`;
+			}
+
+			function formatFrames(frame) {
+				// Format as 6-digit padded number
+				return String(Math.floor(frame)).padStart(6, '0');
+			}
+
+			function updateProgress() {
+				if (!anim) return;
+
+				const currentFrame = Math.min(anim.currentFrame, anim.totalFrames - 1);
+				const totalFrames = anim.totalFrames;
+				const progress = totalFrames > 0 ? (currentFrame / totalFrames) * 100 : 0;
+				const frameRate = anim.frameRate;
+
+				// Handle pingpong mode - check if we've reached the ends
+				if (loopMode === 'pingpong' && isPlaying) {
+					// Check if we've reached the end when going forward
+					if (playDirection === 1 && currentFrame >= totalFrames - 1) {
+						playDirection = -1;
+						anim.setDirection(-1);
+						anim.goToAndPlay(totalFrames - 1, true);
+					}
+					// Check if we've reached the beginning when going backward
+					else if (playDirection === -1 && currentFrame <= 0) {
+						playDirection = 1;
+						anim.setDirection(1);
+						anim.goToAndPlay(0, true);
+					}
+				}
+
+				const clampedProgress = Math.max(0, Math.min(100, progress));
+				document.getElementById('progressBar').style.width = clampedProgress + '%';
+				document.getElementById('progressThumb').style.left = clampedProgress + '%';
+
+				// Update main position display based on selected mode
+				const mainPos = document.getElementById('mainPosition');
+				const icon = document.getElementById('positionIcon');
+				const sub1 = document.getElementById('subPosition1');
+				const sub2 = document.getElementById('subPosition2');
+
+				if (progressMode === 'percent') {
+					// Main display: percentage with padding for consistent width
+					let percentValue = progress.toFixed(1);
+					// Always ensure leading zeros for single digit numbers
+					if (progress < 10) {
+						percentValue = '0' + percentValue;
+					}
+					// Pad to 6 characters for consistent width (e.g., "  00.0", " 050.5", "100.0")
+					const paddedPercent = percentValue.padStart(6, ' ');
+					mainPos.textContent = paddedPercent;
+					mainPos.style.color = '#00e676';
+					mainPos.style.letterSpacing = '3px';
+					// Icon for percentage - using the same icon from unit selector
+					icon.innerHTML =
+						'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#00e676"><path d="M288 192C288 139 245 96 192 96C139 96 96 139 96 192C96 245 139 288 192 288C245 288 288 245 288 192zM544 448C544 395 501 352 448 352C395 352 352 395 352 448C352 501 395 544 448 544C501 544 544 501 544 448zM534.6 150.6C547.1 138.1 547.1 117.8 534.6 105.3C522.1 92.8 501.8 92.8 489.3 105.3L105.3 489.3C92.8 501.8 92.8 522.1 105.3 534.6C117.8 547.1 138.1 547.1 150.6 534.6L534.6 150.6z"/></svg>';
+					icon.style.background = 'rgba(0, 230, 118, 0.15)';
+					icon.style.borderColor = 'rgba(0, 230, 118, 0.4)';
+					icon.style.boxShadow = '0 0 8px rgba(0, 230, 118, 0.2)';
+					// Sub displays with icons
+					sub1.innerHTML =
+						'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#aaa"><path d="M320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320C64 178.6 178.6 64 320 64zM296 184L296 320C296 328 300 335.5 306.7 340L402.7 404C413.7 411.4 428.6 408.4 436 397.3C443.4 386.2 440.4 371.4 429.3 364L344 307.2L344 184C344 170.7 333.3 160 320 160C306.7 160 296 170.7 296 184z"/></svg>' +
+						formatTime(currentFrame, frameRate);
+					sub2.innerHTML =
+						'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#aaa"><path d="M96 160C96 124.7 124.7 96 160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160zM144 432L144 464C144 472.8 151.2 480 160 480L192 480C200.8 480 208 472.8 208 464L208 432C208 423.2 200.8 416 192 416L160 416C151.2 416 144 423.2 144 432zM448 416C439.2 416 432 423.2 432 432L432 464C432 472.8 439.2 480 448 480L480 480C488.8 480 496 472.8 496 464L496 432C496 423.2 488.8 416 480 416L448 416zM144 304L144 336C144 344.8 151.2 352 160 352L192 352C200.8 352 208 344.8 208 336L208 304C208 295.2 200.8 288 192 288L160 288C151.2 288 144 295.2 144 304zM448 288C439.2 288 432 295.2 432 304L432 336C432 344.8 439.2 352 448 352L480 352C488.8 352 496 344.8 496 336L496 304C496 295.2 488.8 288 480 288L448 288zM144 176L144 208C144 216.8 151.2 224 160 224L192 224C200.8 224 208 216.8 208 208L208 176C208 167.2 200.8 160 192 160L160 160C151.2 160 144 167.2 144 176zM448 160C439.2 160 432 167.2 432 176L432 208C432 216.8 439.2 224 448 224L480 224C488.8 224 496 216.8 496 208L496 176C496 167.2 488.8 160 480 160L448 160z"/></svg>' +
+						formatFrames(currentFrame);
+
+					document.getElementById('currentProgress').textContent = paddedPercent + '%';
+					document.getElementById('totalProgress').textContent = '100.0%';
+					document.getElementById('progressReadout').textContent = paddedPercent + '%';
+				} else if (progressMode === 'time') {
+					// Main display: time in mm:ss:ff format
+					mainPos.textContent = formatTime(currentFrame, frameRate);
+					mainPos.style.color = '#00bcd4';
+					mainPos.style.letterSpacing = '2px';
+					// Clock icon for time - using the same icon from unit selector
+					icon.innerHTML =
+						'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#00bcd4"><path d="M320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320C64 178.6 178.6 64 320 64zM296 184L296 320C296 328 300 335.5 306.7 340L402.7 404C413.7 411.4 428.6 408.4 436 397.3C443.4 386.2 440.4 371.4 429.3 364L344 307.2L344 184C344 170.7 333.3 160 320 160C306.7 160 296 170.7 296 184z"/></svg>';
+					icon.style.background = 'rgba(0, 188, 212, 0.15)';
+					icon.style.borderColor = 'rgba(0, 188, 212, 0.4)';
+					icon.style.boxShadow = '0 0 8px rgba(0, 188, 212, 0.2)';
+					// Sub displays with icons - padded percentage without redundant symbol
+					let subPercentValue = progress.toFixed(1);
+					if (progress < 10) {
+						subPercentValue = '0' + subPercentValue;
+					}
+					const paddedSubPercent = subPercentValue.padStart(6, ' ');
+					sub1.innerHTML =
+						'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#aaa"><path d="M288 192C288 139 245 96 192 96C139 96 96 139 96 192C96 245 139 288 192 288C245 288 288 245 288 192zM544 448C544 395 501 352 448 352C395 352 352 395 352 448C352 501 395 544 448 544C501 544 544 501 544 448zM534.6 150.6C547.1 138.1 547.1 117.8 534.6 105.3C522.1 92.8 501.8 92.8 489.3 105.3L105.3 489.3C92.8 501.8 92.8 522.1 105.3 534.6C117.8 547.1 138.1 547.1 150.6 534.6L534.6 150.6z"/></svg>' +
+						paddedSubPercent;
+					sub2.innerHTML =
+						'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#aaa"><path d="M96 160C96 124.7 124.7 96 160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160zM144 432L144 464C144 472.8 151.2 480 160 480L192 480C200.8 480 208 472.8 208 464L208 432C208 423.2 200.8 416 192 416L160 416C151.2 416 144 423.2 144 432zM448 416C439.2 416 432 423.2 432 432L432 464C432 472.8 439.2 480 448 480L480 480C488.8 480 496 472.8 496 464L496 432C496 423.2 488.8 416 480 416L448 416zM144 304L144 336C144 344.8 151.2 352 160 352L192 352C200.8 352 208 344.8 208 336L208 304C208 295.2 200.8 288 192 288L160 288C151.2 288 144 295.2 144 304zM448 288C439.2 288 432 295.2 432 304L432 336C432 344.8 439.2 352 448 352L480 352C488.8 352 496 344.8 496 336L496 304C496 295.2 488.8 288 480 288L448 288zM144 176L144 208C144 216.8 151.2 224 160 224L192 224C200.8 224 208 216.8 208 208L208 176C208 167.2 200.8 160 192 160L160 160C151.2 160 144 167.2 144 176zM448 160C439.2 160 432 167.2 432 176L432 208C432 216.8 439.2 224 448 224L480 224C488.8 224 496 216.8 496 208L496 176C496 167.2 488.8 160 480 160L448 160z"/></svg>' +
+						formatFrames(currentFrame);
+
+					document.getElementById('currentProgress').textContent = formatTime(currentFrame, frameRate);
+					document.getElementById('totalProgress').textContent = formatTime(totalFrames, frameRate);
+					document.getElementById('progressReadout').textContent = formatTime(currentFrame, frameRate);
+				} else if (progressMode === 'frame') {
+					// Main display: 6-digit frame counter
+					mainPos.textContent = formatFrames(currentFrame);
+					mainPos.style.color = '#ff9800';
+					mainPos.style.letterSpacing = '3px';
+					// Film icon for frames - using the same icon from unit selector
+					icon.innerHTML =
+						'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#ff9800"><path d="M96 160C96 124.7 124.7 96 160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160zM144 432L144 464C144 472.8 151.2 480 160 480L192 480C200.8 480 208 472.8 208 464L208 432C208 423.2 200.8 416 192 416L160 416C151.2 416 144 423.2 144 432zM448 416C439.2 416 432 423.2 432 432L432 464C432 472.8 439.2 480 448 480L480 480C488.8 480 496 472.8 496 464L496 432C496 423.2 488.8 416 480 416L448 416zM144 304L144 336C144 344.8 151.2 352 160 352L192 352C200.8 352 208 344.8 208 336L208 304C208 295.2 200.8 288 192 288L160 288C151.2 288 144 295.2 144 304zM448 288C439.2 288 432 295.2 432 304L432 336C432 344.8 439.2 352 448 352L480 352C488.8 352 496 344.8 496 336L496 304C496 295.2 488.8 288 480 288L448 288zM144 176L144 208C144 216.8 151.2 224 160 224L192 224C200.8 224 208 216.8 208 208L208 176C208 167.2 200.8 160 192 160L160 160C151.2 160 144 167.2 144 176zM448 160C439.2 160 432 167.2 432 176L432 208C432 216.8 439.2 224 448 224L480 224C488.8 224 496 216.8 496 208L496 176C496 167.2 488.8 160 480 160L448 160z"/></svg>';
+					icon.style.background = 'rgba(255, 152, 0, 0.15)';
+					icon.style.borderColor = 'rgba(255, 152, 0, 0.4)';
+					icon.style.boxShadow = '0 0 8px rgba(255, 152, 0, 0.2)';
+					// Sub displays with icons - padded percentage without redundant symbol
+					let subPercentValue = progress.toFixed(1);
+					if (progress < 10) {
+						subPercentValue = '0' + subPercentValue;
+					}
+					const paddedSubPercent = subPercentValue.padStart(6, ' ');
+					sub1.innerHTML =
+						'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#aaa"><path d="M288 192C288 139 245 96 192 96C139 96 96 139 96 192C96 245 139 288 192 288C245 288 288 245 288 192zM544 448C544 395 501 352 448 352C395 352 352 395 352 448C352 501 395 544 448 544C501 544 544 501 544 448zM534.6 150.6C547.1 138.1 547.1 117.8 534.6 105.3C522.1 92.8 501.8 92.8 489.3 105.3L105.3 489.3C92.8 501.8 92.8 522.1 105.3 534.6C117.8 547.1 138.1 547.1 150.6 534.6L534.6 150.6z"/></svg>' +
+						paddedSubPercent;
+					sub2.innerHTML =
+						'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#aaa"><path d="M320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320C64 178.6 178.6 64 320 64zM296 184L296 320C296 328 300 335.5 306.7 340L402.7 404C413.7 411.4 428.6 408.4 436 397.3C443.4 386.2 440.4 371.4 429.3 364L344 307.2L344 184C344 170.7 333.3 160 320 160C306.7 160 296 170.7 296 184z"/></svg>' +
+						formatTime(currentFrame, frameRate);
+
+					document.getElementById('currentProgress').textContent = Math.floor(currentFrame);
+					document.getElementById('totalProgress').textContent = Math.floor(totalFrames);
+					document.getElementById('progressReadout').textContent = formatFrames(currentFrame);
+				}
+			}
+
+			// Cycle through progress display modes
+			function cycleProgressMode() {
+				const modes = ['percent', 'time', 'frame'];
+				const currentIndex = modes.indexOf(progressMode);
+				progressMode = modes[(currentIndex + 1) % modes.length];
+
+				const unitIcon = document.getElementById('unitIcon');
+				const unitBtn = document.getElementById('progressUnitBtn');
+
+				// Remove all mode classes and add the current one
+				unitBtn.classList.remove('percent', 'time', 'frame');
+				unitBtn.classList.add(progressMode);
+
+				// Update the SVG icon with proper fill attribute - use outerHTML to replace entire element
+				if (progressMode === 'percent') {
+					unitIcon.outerHTML =
+						'<svg id="unitIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#00e676"><path d="M288 192C288 139 245 96 192 96C139 96 96 139 96 192C96 245 139 288 192 288C245 288 288 245 288 192zM544 448C544 395 501 352 448 352C395 352 352 395 352 448C352 501 395 544 448 544C501 544 544 501 544 448zM534.6 150.6C547.1 138.1 547.1 117.8 534.6 105.3C522.1 92.8 501.8 92.8 489.3 105.3L105.3 489.3C92.8 501.8 92.8 522.1 105.3 534.6C117.8 547.1 138.1 547.1 150.6 534.6L534.6 150.6z"/></svg>';
+				} else if (progressMode === 'time') {
+					// Clock icon
+					unitIcon.outerHTML =
+						'<svg id="unitIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#00bcd4"><path d="M320 64C461.4 64 576 178.6 576 320C576 461.4 461.4 576 320 576C178.6 576 64 461.4 64 320C64 178.6 178.6 64 320 64zM296 184L296 320C296 328 300 335.5 306.7 340L402.7 404C413.7 411.4 428.6 408.4 436 397.3C443.4 386.2 440.4 371.4 429.3 364L344 307.2L344 184C344 170.7 333.3 160 320 160C306.7 160 296 170.7 296 184z"/></svg>';
+				} else if (progressMode === 'frame') {
+					// Film strip icon
+					unitIcon.outerHTML =
+						'<svg id="unitIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" fill="#ff9800"><path d="M96 160C96 124.7 124.7 96 160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160zM144 432L144 464C144 472.8 151.2 480 160 480L192 480C200.8 480 208 472.8 208 464L208 432C208 423.2 200.8 416 192 416L160 416C151.2 416 144 423.2 144 432zM448 416C439.2 416 432 423.2 432 432L432 464C432 472.8 439.2 480 448 480L480 480C488.8 480 496 472.8 496 464L496 432C496 423.2 488.8 416 480 416L448 416zM144 304L144 336C144 344.8 151.2 352 160 352L192 352C200.8 352 208 344.8 208 336L208 304C208 295.2 200.8 288 192 288L160 288C151.2 288 144 295.2 144 304zM448 288C439.2 288 432 295.2 432 304L432 336C432 344.8 439.2 352 448 352L480 352C488.8 352 496 344.8 496 336L496 304C496 295.2 488.8 288 480 288L448 288zM144 176L144 208C144 216.8 151.2 224 160 224L192 224C200.8 224 208 216.8 208 208L208 176C208 167.2 200.8 160 192 160L160 160C151.2 160 144 167.2 144 176zM448 160C439.2 160 432 167.2 432 176L432 208C432 216.8 439.2 224 448 224L480 224C488.8 224 496 216.8 496 208L496 176C496 167.2 488.8 160 480 160L448 160z"/></svg>';
+				}
+
+				updateProgress();
+			}
+
+			// Progress bar dragging
+			function startProgressDrag(event) {
+				if (event.target.id === 'progressThumb' || event.target.id === 'progressContainer') {
+					isDraggingProgress = true;
+					seekToPosition(event);
+					event.preventDefault();
+				}
+			}
+
+			function seekToPosition(event) {
+				if (!anim) return;
+
+				const rect = document.getElementById('progressContainer').getBoundingClientRect();
+				const x = Math.max(0, Math.min(event.clientX - rect.left, rect.width));
+				const percentage = x / rect.width;
+				const frame = Math.floor(percentage * anim.totalFrames);
+
+				anim.goToAndStop(frame, true);
+				updateProgress();
+			}
+
+			function jumpTo() {
+				if (!anim) return;
+
+				const input = document.getElementById('jumpInput').value.trim();
+				let frame = 0;
+
+				// Check if animation is less than a minute
+				const totalDuration = anim.totalFrames / anim.frameRate;
+				const isShortAnimation = totalDuration < 60;
+
+				if (input.includes('%')) {
+					// Percentage: "50%"
+					const percent = parseFloat(input.replace('%', ''));
+					frame = (percent / 100) * anim.totalFrames;
+				} else if (input.includes(':')) {
+					const parts = input.split(':');
+
+					if (isShortAnimation && parts.length === 2) {
+						// For short animations, treat as ss:fr format
+						const seconds = parseInt(parts[0]) || 0;
+						const frames = parseInt(parts[1]) || 0;
+						frame = seconds * anim.frameRate + frames;
+					} else if (!isShortAnimation && parts.length === 2) {
+						// For long animations, treat as mm:ss format
+						const minutes = parseInt(parts[0]) || 0;
+						const seconds = parseInt(parts[1]) || 0;
+						frame = (minutes * 60 + seconds) * anim.frameRate;
+					} else if (parts.length === 3) {
+						// mm:ss:fr format for long animations
+						const minutes = parseInt(parts[0]) || 0;
+						const seconds = parseInt(parts[1]) || 0;
+						const frames = parseInt(parts[2]) || 0;
+						frame = (minutes * 60 + seconds) * anim.frameRate + frames;
+					}
+				} else if (input.includes('s')) {
+					// Seconds: "5.5s"
+					const seconds = parseFloat(input.replace('s', ''));
+					frame = seconds * anim.frameRate;
+				} else {
+					// Frame number: "120"
+					frame = parseFloat(input);
+				}
+
+				if (!isNaN(frame)) {
+					frame = Math.max(0, Math.min(frame, anim.totalFrames - 1));
+					anim.goToAndStop(frame, true);
+					if (isPlaying) {
+						anim.play();
+					}
+				}
+			}
+
+			// Settings functions
+			function updateZoom(value) {
+				// Snap to 10% increments with haptic-like feedback
+				const snappedValue = Math.round(value / 10) * 10;
+				const slider = document.getElementById('zoomSlider');
+
+				// Only update if value changed (creates the "tick" feeling)
+				if (slider.value != snappedValue) {
+					slider.value = snappedValue;
+				}
+
+				document.getElementById('zoomValue').textContent = snappedValue + '%';
+				document.getElementById('lottie-container').style.transform = `scale(${snappedValue / 100})`;
+			}
+
+			function updateSpeed(value) {
+				document.getElementById('speedValue').textContent = value + 'x';
+				if (anim) {
+					anim.setSpeed(parseFloat(value));
+				}
+			}
+
+			function updateBackground(color) {
+				document.body.style.backgroundColor = color;
+			}
+
+			// Panel toggle
+			function togglePanel() {
+				const panel = document.getElementById('controlPanel');
+				panel.classList.toggle('collapsed');
+
+				// Update toggle icon based on state
+				const toggleIcon = document.getElementById('toggleIcon');
+				if (panel.classList.contains('collapsed')) {
+					// Show plus icon when collapsed (to expand)
+					toggleIcon.innerHTML =
+						'<path d="M160 96C124.7 96 96 124.7 96 160L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 160C544 124.7 515.3 96 480 96L160 96zM320 208C333.3 208 344 218.7 344 232L344 296L408 296C421.3 296 432 306.7 432 320C432 333.3 421.3 344 408 344L344 344L344 408C344 421.3 333.3 432 320 432C306.7 432 296 421.3 296 408L296 344L232 344C218.7 344 208 333.3 208 320C208 306.7 218.7 296 232 296L296 296L296 232C296 218.7 306.7 208 320 208z"/>';
+				} else {
+					// Show minus icon when expanded (to collapse)
+					toggleIcon.innerHTML =
+						'<path d="M160 96C124.7 96 96 124.7 96 160L96 480C96 515.3 124.7 544 160 544L480 544C515.3 544 544 515.3 544 480L544 160C544 124.7 515.3 96 480 96L160 96zM232 296L408 296C421.3 296 432 306.7 432 320C432 333.3 421.3 344 408 344L232 344C218.7 344 208 333.3 208 320C208 306.7 218.7 296 232 296z"/>';
+				}
+			}
+
+			// Mini mode toggle
+			function toggleMiniMode() {
+				const panel = document.getElementById('controlPanel');
+				panel.classList.toggle('mini');
+
+				// Update button icon based on state
+				const miniIcon = document.getElementById('miniIcon');
+				if (panel.classList.contains('mini')) {
+					// Show window icon when in mini mode (to expand back)
+					miniIcon.innerHTML =
+						'<path d="M112 288L112 448C112 456.8 119.2 464 128 464L512 464C520.8 464 528 456.8 528 448L528 288L112 288zM64 192C64 156.7 92.7 128 128 128L512 128C547.3 128 576 156.7 576 192L576 448C576 483.3 547.3 512 512 512L128 512C92.7 512 64 483.3 64 448L64 192z"/>';
+				} else {
+					// Show underscore icon when in full mode (to minimize)
+					miniIcon.innerHTML = '<path d="M64 488C64 474.7 74.7 464 88 464L552 464C565.3 464 576 474.7 576 488C576 501.3 565.3 512 552 512L88 512C74.7 512 64 501.3 64 488z"/>';
+				}
+			}
+
+			// Loop mode functionality
+			function toggleLoopMode() {
+				const modes = ['loop', 'none', 'pingpong'];
+				const currentIndex = modes.indexOf(loopMode);
+				loopMode = modes[(currentIndex + 1) % modes.length];
+
+				const loopIcon = document.getElementById('loopIcon');
+				const btn = document.getElementById('loopBtn');
+
+				// Update data-mode attribute for styling
+				btn.setAttribute('data-mode', loopMode);
+
+				if (loopMode === 'loop') {
+					if (anim) {
+						anim.loop = true;
+						anim.setDirection(1);
+						playDirection = 1; // Reset direction for normal loop
+					}
+					btn.title = 'Loop Mode: Loop';
+					// Loop icon with green color
+					loopIcon.outerHTML =
+						'<svg id="loopIcon" fill="#4caf50" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>';
+				} else if (loopMode === 'none') {
+					if (anim) {
+						anim.loop = false;
+						anim.setDirection(1);
+						playDirection = 1; // Reset direction
+					}
+					btn.title = 'Loop Mode: Once';
+					// Play once icon (arrow right) with red color
+					loopIcon.outerHTML =
+						'<svg id="loopIcon" fill="#ef5350" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>';
+				} else if (loopMode === 'pingpong') {
+					if (anim) {
+						anim.loop = false; // Disable native loop, we'll handle it manually
+						anim.setDirection(1);
+						playDirection = 1; // Start with forward direction
+					}
+					btn.title = 'Loop Mode: Ping-Pong';
+					// Ping pong icon (arrows left-right) with orange color
+					loopIcon.outerHTML =
+						'<svg id="loopIcon" fill="#ff9800" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.707 14.707a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 1.414L5.414 9H13a1 1 0 110 2H5.414l2.293 2.293a1 1 0 010 1.414z" clip-rule="evenodd"/><path fill-rule="evenodd" d="M12.293 5.293a1 1 0 011.414 0l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414-1.414L14.586 11H7a1 1 0 110-2h7.586l-2.293-2.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>';
+				}
+			}
+
+			// Position joystick control
+			function startPositionDrag(event) {
+				// Grow on mousedown
+				const control = document.getElementById('positionControl');
+				control.classList.add('active');
+				isDraggingPosition = true;
+				updatePositionStick(event);
+				event.preventDefault();
+			}
+
+			function updatePositionStick(event) {
+				if (!isDraggingPosition) return;
+
+				const control = document.getElementById('positionControl');
+				const stick = document.getElementById('positionStick');
+				const rect = control.getBoundingClientRect();
+
+				// Calculate position relative to control center
+				const x = event.clientX - rect.left - rect.width / 2;
+				const y = event.clientY - rect.top - rect.height / 2;
+
+				// Limit to rectangle bounds
+				const maxX = rect.width / 2 - 8;
+				const maxY = rect.height / 2 - 8;
+				let limitedX = Math.max(-maxX, Math.min(x, maxX));
+				let limitedY = Math.max(-maxY, Math.min(y, maxY));
+
+				// Center snapping - snap to center if within 10px
+				const snapDistance = 10;
+				if (Math.abs(limitedX) < snapDistance && Math.abs(limitedY) < snapDistance) {
+					limitedX = 0;
+					limitedY = 0;
+				}
+
+				// Convert to percentage for stick position
+				const percentX = (limitedX / (rect.width / 2)) * 50;
+				const percentY = (limitedY / (rect.height / 2)) * 50;
+
+				stick.style.left = 50 + percentX + '%';
+				stick.style.top = 50 + percentY + '%';
+
+				// Apply position offset to animation container
+				// Base range is 200px, doubled to 400px when Shift is held
+				const rangeMultiplier = event.shiftKey ? 2 : 1;
+				const baseRange = 200;
+				positionOffset.x = (limitedX / maxX) * baseRange * rangeMultiplier;
+				positionOffset.y = (limitedY / maxY) * baseRange * rangeMultiplier;
+
+				const container = document.getElementById('lottie-container');
+				const currentScale = parseFloat(document.getElementById('zoomSlider').value) / 100;
+				container.style.transform = `scale(${currentScale}) translate(${positionOffset.x}px, ${positionOffset.y}px)`;
+			}
+
+			// Mouse event handlers for dragging
+			document.addEventListener('mousemove', function (event) {
+				if (isDraggingProgress) {
+					requestAnimationFrame(() => seekToPosition(event));
+				} else if (isDraggingPosition) {
+					updatePositionStick(event);
+				}
+			});
+
+			window.addEventListener('mouseup', function () {
+				// Handle progress bar drag end
+				if (isDraggingProgress) {
+					isDraggingProgress = false;
+				}
+
+				// Handle joystick drag end - shrink back but keep position
+				if (isDraggingPosition) {
+					isDraggingPosition = false;
+					// Shrink back on mouseup
+					const control = document.getElementById('positionControl');
+					control.classList.remove('active');
+					// Keep the joystick position - don't reset!
+				}
+			});
+
+			// Keyboard shortcuts
+			document.addEventListener('keydown', function (e) {
+				if (e.code === 'Space') {
+					e.preventDefault();
+					togglePlay();
+				} else if (e.code === 'KeyR') {
+					restart();
+				} else if (e.code === 'KeyS') {
+					stop();
+				} else if (e.code === 'KeyL') {
+					toggleLoopMode();
+				} else if (e.code === 'Escape') {
+					togglePanel();
+				}
+			});
+
+			// Add position control event listener
+			document.getElementById('positionControl').addEventListener('mousedown', startPositionDrag);
+
+			// Add enter key listener for jump input
+			document.getElementById('jumpInput').addEventListener('keydown', function (e) {
+				if (e.key === 'Enter') {
+					e.preventDefault();
+					jumpTo();
+				}
+			});
+		</script>
+	</body>
+</html>
