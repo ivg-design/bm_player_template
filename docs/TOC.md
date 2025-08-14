@@ -7,6 +7,7 @@
 ## Technical Documentation
 - [Build Process](build-process.md) - Details about the template build system
 - [Player Controls](player-controls.md) - Advanced Lottie player features
+- [Subframe Rendering](subframe-rendering.md) - Toggle for fixing rounded corner flickering
 - [Integration Guide](integration-guide.md) - Bodymovin plugin integration
 
 ## API Reference

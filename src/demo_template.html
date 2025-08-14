@@ -1040,6 +1040,35 @@
 					flex-direction: column;
 				}
 			}
+
+			/* Subframe Button Styles */
+			.subframe-btn {
+				min-width: 45px;
+			}
+
+			.subframe-btn svg {
+				opacity: 0.5;
+				transition: opacity 0.2s;
+			}
+
+			.subframe-btn.active {
+				background: linear-gradient(135deg, rgba(102, 126, 234, 0.3) 0%, rgba(127, 75, 162, 0.3) 100%);
+				border-color: rgba(102, 126, 234, 0.5);
+			}
+
+			.subframe-btn.active svg {
+				opacity: 1;
+				filter: drop-shadow(0 0 3px rgba(102, 126, 234, 0.5));
+			}
+
+			.subframe-btn:hover {
+				background: rgba(255, 255, 255, 0.2);
+				transform: scale(1.05);
+			}
+
+			.subframe-btn.active:hover {
+				background: linear-gradient(135deg, rgba(102, 126, 234, 0.4) 0%, rgba(127, 75, 162, 0.4) 100%);
+			}
 		</style>
 		<!-- Load Lottie library -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
@@ -1169,6 +1198,13 @@
 							<input type="text" class="jump-input" id="jumpInput" placeholder="50% | 01:30 | 120" title="Jump to: percentage (50%), time (01:30 or 01:30:15), or frame (120)" />
 							<button class="jump-btn" onclick="jumpTo()">GO</button>
 						</div>
+
+						<!-- Subframe Toggle Button -->
+						<button class="control-btn subframe-btn active" id="subframeBtn" onclick="toggleSubframe()" title="Toggle subframe rendering for smoother animations">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="currentColor">
+								<path d="M96 160C96 124.7 124.7 96 160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160zM240 164C215.7 164 196 183.7 196 208L196 256C196 280.3 215.7 300 240 300L272 300C296.3 300 316 280.3 316 256L316 208C316 183.7 296.3 164 272 164L240 164zM236 208C236 205.8 237.8 204 240 204L272 204C274.2 204 276 205.8 276 208L276 256C276 258.2 274.2 260 272 260L240 260C237.8 260 236 258.2 236 256L236 208zM376 164C365 164 356 173 356 184C356 193.7 362.9 201.7 372 203.6L372 280C372 291 381 300 392 300C403 300 412 291 412 280L412 184C412 173 403 164 392 164L376 164zM228 360C228 369.7 234.9 377.7 244 379.6L244 456C244 467 253 476 264 476C275 476 284 467 284 456L284 360C284 349 275 340 264 340L248 340C237 340 228 349 228 360zM324 384L324 432C324 456.3 343.7 476 368 476L400 476C424.3 476 444 456.3 444 432L444 384C444 359.7 424.3 340 400 340L368 340C343.7 340 324 359.7 324 384zM368 380L400 380C402.2 380 404 381.8 404 384L404 432C404 434.2 402.2 436 400 436L368 436C365.8 436 364 434.2 364 432L364 384C364 381.8 365.8 380 368 380z"/>
+							</svg>
+						</button>
 					</div>
 				</div>
 
@@ -1447,6 +1483,13 @@
 
 					// Wait for animation to be ready
 					anim.addEventListener('DOMLoaded', function () {
+						// Apply initial subframe setting (button starts as active = enabled)
+						const subframeBtn = document.getElementById('subframeBtn');
+						if (subframeBtn) {
+							const isEnabled = subframeBtn.classList.contains('active');
+							anim.setSubframe(isEnabled);
+						}
+						
 						updateAnimationInfo();
 						startProgressUpdate();
 						updatePlayPauseButton(); // Update button to show correct initial state
@@ -1837,6 +1880,47 @@
 
 			function updateBackground(color) {
 				document.body.style.backgroundColor = color;
+			}
+
+			// Toggle subframe rendering
+			function toggleSubframe() {
+				const btn = document.getElementById('subframeBtn');
+				const isEnabled = !btn.classList.contains('active');
+				
+				// Toggle button active state
+				btn.classList.toggle('active');
+				
+				if (anim) {
+					// Store current state
+					const wasPlaying = isPlaying && !isStopped;
+					const currentFrame = anim.currentFrame;
+					
+					// Stop animation to apply changes cleanly
+					anim.stop();
+					
+					// Set subframe enabled/disabled
+					anim.setSubframe(isEnabled);
+					
+					// Reset to beginning to see the effect immediately
+					anim.goToAndStop(0, true);
+					
+					// If it was playing, restart playback
+					if (wasPlaying) {
+						setTimeout(() => {
+							anim.play();
+							isPlaying = true;
+							isStopped = false;
+							updatePlayPauseButton();
+							updateStopButton();
+						}, 100);
+					} else {
+						// Update UI state
+						isStopped = true;
+						isPlaying = false;
+						updatePlayPauseButton();
+						updateStopButton();
+					}
+				}
 			}
 
 			// Panel toggle

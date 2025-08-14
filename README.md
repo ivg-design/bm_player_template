@@ -11,6 +11,7 @@ A professional Lottie animation player with advanced controls and a build system
 - Frame counter and time display
 - Loop and reverse playback options
 - Mini mode for compact viewing
+- Subframe rendering toggle (fixes rounded corner flickering)
 
 ### 🎨 Professional UI
 - Dark theme with consistent color scheme

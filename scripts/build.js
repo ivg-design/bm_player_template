@@ -101,24 +101,38 @@ async function processTemplate() {
     log.info(chalk.gray('  ✓ Removed'), chalk.cyan(cdnMatches.length), chalk.gray('CDN script tag(s)'));
   }
 
-  // Step 2: Inject minified player after <body> tag
-  const bodyTagPattern = /(<body[^>]*>)/i;
-  const bodyMatch = processedContent.match(bodyTagPattern);
-  if (bodyMatch) {
-    const injectionPoint = bodyMatch[0];
-    // Escape $ characters in the player content to prevent replacement issues
+  // Step 2: Replace the content between build markers or inject if not found
+  const buildMarkerPattern = /<!-- build:scripto -->[\s\S]*?<!-- endbuild -->/;
+  const hasMarkers = buildMarkerPattern.test(processedContent);
+  
+  if (hasMarkers) {
+    // Replace existing content between markers
     const escapedPlayerContent = playerContent.replace(/\$/g, '$$$$');
-    const injectionContent = `${injectionPoint}\n<!-- build:scripto -->\n<script>\n${escapedPlayerContent}\n</script>\n<!-- endbuild -->`;
-    // Use a function replacer to avoid any interpretation of special chars
-    processedContent = processedContent.replace(bodyTagPattern, () => injectionContent);
+    const replacementContent = `<!-- build:scripto -->\n<script>\n${escapedPlayerContent}\n</script>\n<!-- endbuild -->`;
+    processedContent = processedContent.replace(buildMarkerPattern, replacementContent);
     replacements.push({
-      action: 'Injected minified player',
-      location: 'After <body> tag'
+      action: 'Replaced player content',
+      location: 'Between build markers'
     });
-    log.info(chalk.gray('  ✓ Injected minified player after <body> tag'));
+    log.info(chalk.gray('  ✓ Replaced content between build markers'));
   } else {
-    log.error(chalk.red('  ✗ Could not find <body> tag'));
-    return null;
+    // Inject after <body> tag if markers don't exist
+    const bodyTagPattern = /(<body[^>]*>)/i;
+    const bodyMatch = processedContent.match(bodyTagPattern);
+    if (bodyMatch) {
+      const injectionPoint = bodyMatch[0];
+      const escapedPlayerContent = playerContent.replace(/\$/g, '$$$$');
+      const injectionContent = `${injectionPoint}\n<!-- build:scripto -->\n<script>\n${escapedPlayerContent}\n</script>\n<!-- endbuild -->`;
+      processedContent = processedContent.replace(bodyTagPattern, () => injectionContent);
+      replacements.push({
+        action: 'Injected minified player',
+        location: 'After <body> tag'
+      });
+      log.info(chalk.gray('  ✓ Injected minified player after <body> tag'));
+    } else {
+      log.error(chalk.red('  ✗ Could not find <body> tag'));
+      return null;
+    }
   }
 
   // Step 3: Replace animationData with placeholder

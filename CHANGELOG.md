@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - MIT License file
 - Organized project structure with dedicated folders
+- Subframe rendering toggle button to address rounded corner flickering issues
+- Visual feedback for subframe toggle state (active/inactive)
+- Auto-reset animation when toggling subframe to immediately show effect
 
 ### Changed
 - Moved source template to `src/` directory
@@ -17,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved build script to `scripts/` directory
 - Added `dist/` directory for output files
 - Updated all paths and documentation to reflect new structure
+
+### Fixed
+- Implemented workaround for rounded corner flickering in Lottie animations
+- Added ability to disable subframe rendering which resolves flickering issues
 
 ## [0.2.0] - 2025-08-13
 
