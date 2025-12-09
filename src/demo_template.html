@@ -2577,7 +2577,7 @@
 			}
 
 			// Custom Elements panel functions
-			var customElements = [];
+			var lottieCustomElements = [];
 
 			function toggleElementsPanel() {
 				const panel = document.getElementById('elementsPanel');
@@ -2594,7 +2594,7 @@
 
 			function scanCustomElements() {
 				const listEl = document.getElementById('elementsList');
-				customElements = [];
+				lottieCustomElements = [];
 
 				// Get the SVG element inside lottie container
 				const svg = document.querySelector('#lottie svg');
@@ -2647,7 +2647,7 @@
 						}
 					}
 
-					customElements.push({
+					lottieCustomElements.push({
 						id: id,
 						element: el,
 						type: elementType,
@@ -2686,14 +2686,14 @@
 			function renderElementsList() {
 				const listEl = document.getElementById('elementsList');
 
-				if (customElements.length === 0) {
+				if (lottieCustomElements.length === 0) {
 					listEl.innerHTML = '<div class="no-elements">No custom elements found.<br><small>Add IDs in After Effects to elements you want to control.</small></div>';
 					return;
 				}
 
 				listEl.innerHTML = '';
 
-				customElements.forEach((item, index) => {
+				lottieCustomElements.forEach((item, index) => {
 					const div = document.createElement('div');
 					div.className = 'element-item ' + item.type;
 
