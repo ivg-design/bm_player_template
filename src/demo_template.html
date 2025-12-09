@@ -2632,9 +2632,24 @@
 						elementType = 'shape';
 						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
 
-						// Check for fill
+						// Check for fill - if it's a gradient reference, add gradient controls
 						const fill = el.getAttribute('fill');
-						if (fill && !fill.startsWith('url(')) {
+						if (fill && fill.startsWith('url(#')) {
+							// Extract gradient ID and get the gradient element
+							const gradientId = fill.match(/url\(#(.+)\)/);
+							if (gradientId) {
+								const gradientEl = document.getElementById(gradientId[1]);
+								if (gradientEl) {
+									const stops = gradientEl.querySelectorAll('stop');
+									const stopColors = [];
+									stops.forEach((stop, i) => {
+										const color = stop.getAttribute('stop-color') || '#000000';
+										stopColors.push({ index: i, color: rgbToHex(color) });
+									});
+									controls.push({ type: 'gradient', gradientId: gradientId[1], stops: stopColors });
+								}
+							}
+						} else if (fill && fill !== 'none') {
 							controls.push({ type: 'fill', value: rgbToHex(fill) });
 						}
 
@@ -2660,10 +2675,28 @@
 			}
 
 			function getComputedOpacity(el) {
+				// Check inline style first
 				const style = el.style.opacity;
 				if (style !== '') return parseFloat(style);
+
+				// Check opacity attribute
 				const attr = el.getAttribute('opacity');
 				if (attr) return parseFloat(attr);
+
+				// Check fill-opacity for shapes
+				const fillOpacity = el.getAttribute('fill-opacity');
+				if (fillOpacity) return parseFloat(fillOpacity);
+
+				// Check parent group opacity (Lottie often sets opacity on parent g element)
+				let parent = el.parentElement;
+				while (parent && parent.tagName.toLowerCase() !== 'svg') {
+					const parentOpacity = parent.style.opacity || parent.getAttribute('opacity');
+					if (parentOpacity !== null && parentOpacity !== '') {
+						return parseFloat(parentOpacity);
+					}
+					parent = parent.parentElement;
+				}
+
 				return 1;
 			}
 
@@ -2737,12 +2770,14 @@
 								</div>
 							`;
 						} else if (ctrl.type === 'gradient') {
+							// Use gradientId if available (for shapes with gradient fill), otherwise use item.id
+							const targetGradientId = ctrl.gradientId || item.id;
 							let stopsHTML = '';
 							ctrl.stops.forEach((stop, si) => {
 								stopsHTML += `
 									<div class="gradient-stop">
 										<input type="color" value="${stop.color}"
-											onchange="updateGradientStop('${item.id}', ${si}, this.value)">
+											onchange="updateGradientStop('${targetGradientId}', ${si}, this.value)">
 										<span class="gradient-stop-label">${si + 1}</span>
 									</div>
 								`;
@@ -2770,7 +2805,18 @@
 			function updateElementOpacity(id, value) {
 				const el = document.getElementById(id);
 				if (el) {
+					// Set opacity on the element itself
 					el.style.opacity = value;
+
+					// Also try to find and update the parent group if it controls opacity
+					let parent = el.parentElement;
+					while (parent && parent.tagName.toLowerCase() !== 'svg') {
+						if (parent.style.opacity !== '' || parent.getAttribute('opacity')) {
+							parent.style.opacity = value;
+							break;
+						}
+						parent = parent.parentElement;
+					}
 				}
 			}
 
