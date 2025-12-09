@@ -1397,6 +1397,10 @@
 				border-left: 3px solid #4caf50;
 			}
 
+			.element-item.text {
+				border-left: 3px solid #ff9800;
+			}
+
 			.element-header {
 				display: flex;
 				justify-content: space-between;
@@ -2615,27 +2619,11 @@
 					let elementType = 'shape';
 					let controls = [];
 
-					if (tagName === 'lineargradient' || tagName === 'radialgradient') {
-						elementType = 'gradient';
-						// Get gradient stops
-						const stops = el.querySelectorAll('stop');
-						const stopColors = [];
-						stops.forEach((stop, i) => {
-							const color = stop.getAttribute('stop-color') || '#000000';
-							stopColors.push({ index: i, color: rgbToHex(color) });
-						});
-						controls.push({ type: 'gradient', stops: stopColors });
-					} else if (tagName === 'g') {
-						elementType = 'group';
-						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
-					} else if (tagName === 'path' || tagName === 'rect' || tagName === 'circle' || tagName === 'ellipse') {
-						elementType = 'shape';
-						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
-
+					// Helper to detect fill/stroke on an element
+					function detectFillStroke(element, ctrlArray) {
 						// Check for fill - if it's a gradient reference, add gradient controls
-						const fill = el.getAttribute('fill');
+						const fill = element.getAttribute('fill');
 						if (fill && fill.startsWith('url(#')) {
-							// Extract gradient ID and get the gradient element
 							const gradientId = fill.match(/url\(#(.+)\)/);
 							if (gradientId) {
 								const gradientEl = document.getElementById(gradientId[1]);
@@ -2646,29 +2634,81 @@
 										const color = stop.getAttribute('stop-color') || '#000000';
 										stopColors.push({ index: i, color: rgbToHex(color) });
 									});
-									controls.push({ type: 'gradient', gradientId: gradientId[1], stops: stopColors });
+									ctrlArray.push({ type: 'gradient', gradientId: gradientId[1], stops: stopColors });
 								}
 							}
 						} else if (fill && fill !== 'none') {
-							controls.push({ type: 'fill', value: rgbToHex(fill) });
+							ctrlArray.push({ type: 'fill', value: rgbToHex(fill) });
 						}
 
 						// Check for stroke
-						const stroke = el.getAttribute('stroke');
+						const stroke = element.getAttribute('stroke');
 						if (stroke && stroke !== 'none') {
-							controls.push({ type: 'stroke', value: rgbToHex(stroke) });
-							const strokeWidth = el.getAttribute('stroke-width') || '1';
-							controls.push({ type: 'strokeWidth', value: parseFloat(strokeWidth) });
+							// Check if stroke is a gradient
+							if (stroke.startsWith('url(#')) {
+								const gradientId = stroke.match(/url\(#(.+)\)/);
+								if (gradientId) {
+									const gradientEl = document.getElementById(gradientId[1]);
+									if (gradientEl) {
+										const stops = gradientEl.querySelectorAll('stop');
+										const stopColors = [];
+										stops.forEach((stop, i) => {
+											const color = stop.getAttribute('stop-color') || '#000000';
+											stopColors.push({ index: i, color: rgbToHex(color) });
+										});
+										ctrlArray.push({ type: 'strokeGradient', gradientId: gradientId[1], stops: stopColors });
+									}
+								}
+							} else {
+								ctrlArray.push({ type: 'stroke', value: rgbToHex(stroke) });
+							}
+							const strokeWidth = element.getAttribute('stroke-width') || '1';
+							ctrlArray.push({ type: 'strokeWidth', value: parseFloat(strokeWidth) });
 						}
 					}
 
-					lottieCustomElements.push({
-						id: id,
-						element: el,
-						type: elementType,
-						tagName: tagName,
-						controls: controls
-					});
+					if (tagName === 'lineargradient' || tagName === 'radialgradient') {
+						elementType = 'gradient';
+						const stops = el.querySelectorAll('stop');
+						const stopColors = [];
+						stops.forEach((stop, i) => {
+							const color = stop.getAttribute('stop-color') || '#000000';
+							stopColors.push({ index: i, color: rgbToHex(color) });
+						});
+						controls.push({ type: 'gradient', stops: stopColors });
+
+					} else if (tagName === 'text' || tagName === 'tspan') {
+						elementType = 'text';
+						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
+						detectFillStroke(el, controls);
+						// Add text content control
+						const textContent = el.textContent || '';
+						if (textContent.trim()) {
+							controls.push({ type: 'textContent', value: textContent });
+						}
+
+					} else if (tagName === 'g') {
+						elementType = 'group';
+						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
+						// Check if group has fill/stroke (sometimes set on groups)
+						detectFillStroke(el, controls);
+
+					} else if (tagName === 'path' || tagName === 'rect' || tagName === 'circle' || tagName === 'ellipse' || tagName === 'line' || tagName === 'polyline' || tagName === 'polygon') {
+						elementType = 'shape';
+						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
+						detectFillStroke(el, controls);
+					}
+
+					// Only add elements that have controls
+					if (controls.length > 0) {
+						lottieCustomElements.push({
+							id: id,
+							element: el,
+							type: elementType,
+							tagName: tagName,
+							controls: controls
+						});
+					}
 				});
 
 				renderElementsList();
@@ -2786,9 +2826,10 @@
 									<span class="element-control-value">${ctrl.value}px</span>
 								</div>
 							`;
-						} else if (ctrl.type === 'gradient') {
-							// Use gradientId if available (for shapes with gradient fill), otherwise use item.id
+						} else if (ctrl.type === 'gradient' || ctrl.type === 'strokeGradient') {
+							// Use gradientId if available (for shapes with gradient fill/stroke), otherwise use item.id
 							const targetGradientId = ctrl.gradientId || item.id;
+							const label = ctrl.type === 'strokeGradient' ? 'Stroke' : 'Fill';
 							let stopsHTML = '';
 							ctrl.stops.forEach((stop, si) => {
 								stopsHTML += `
@@ -2800,7 +2841,18 @@
 								`;
 							});
 							controlsHTML += `
-								<div class="gradient-stops">${stopsHTML}</div>
+								<div class="element-control-row" style="flex-direction: column; align-items: flex-start;">
+									<span class="element-control-label" style="margin-bottom: 4px;">${label} Gradient</span>
+									<div class="gradient-stops" style="width: 100%;">${stopsHTML}</div>
+								</div>
+							`;
+						} else if (ctrl.type === 'textContent') {
+							controlsHTML += `
+								<div class="element-control-row">
+									<span class="element-control-label">Text</span>
+									<input type="text" class="element-control-input" value="${ctrl.value.replace(/"/g, '&quot;')}"
+										onchange="updateElementText('${item.id}', this.value)">
+								</div>
 							`;
 						}
 					});
@@ -2862,6 +2914,13 @@
 				const el = document.getElementById(id);
 				if (el) {
 					el.setAttribute('stroke-width', value);
+				}
+			}
+
+			function updateElementText(id, value) {
+				const el = document.getElementById(id);
+				if (el) {
+					el.textContent = value;
 				}
 			}
 
