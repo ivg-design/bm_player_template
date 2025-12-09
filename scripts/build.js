@@ -2,12 +2,41 @@
 
 const fs = require('fs');
 const path = require('path');
-const inquirer = require('inquirer');
+const readline = require('readline');
 const chalk = require('chalk');
 const log = require('loglevel');
 
 // Set up logging
 log.setLevel('info');
+
+// Parse command line arguments
+const args = process.argv.slice(2);
+const autoYes = args.includes('--yes') || args.includes('-y');
+
+// Simple prompt function using native readline
+function prompt(question, defaultValue = false) {
+  if (autoYes) {
+    return Promise.resolve(true);
+  }
+
+  return new Promise((resolve) => {
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    const hint = defaultValue ? '(Y/n)' : '(y/N)';
+    rl.question(`${question} ${hint} `, (answer) => {
+      rl.close();
+      const normalized = answer.trim().toLowerCase();
+      if (normalized === '') {
+        resolve(defaultValue);
+      } else {
+        resolve(normalized === 'y' || normalized === 'yes');
+      }
+    });
+  });
+}
 
 // Configuration
 const CONFIG = {
@@ -212,14 +241,7 @@ async function main() {
     log.warn(chalk.yellow('\n⚠ Target directory does not exist:'));
     log.warn(chalk.gray(CONFIG.targetDir));
     
-    const { createDir } = await inquirer.prompt([
-      {
-        type: 'confirm',
-        name: 'createDir',
-        message: 'Would you like to save the processed file in the current directory instead?',
-        default: true
-      }
-    ]);
+    const createDir = await prompt('Would you like to save the processed file in the current directory instead?', true);
 
     if (createDir) {
       CONFIG.targetDir = __dirname;
@@ -241,14 +263,7 @@ async function main() {
     log.info(chalk.gray('  Backup file:'), chalk.yellow(backupName));
   }
 
-  const { confirmReplace } = await inquirer.prompt([
-    {
-      type: 'confirm',
-      name: 'confirmReplace',
-      message: chalk.bold('Do you want to proceed with replacing the file?'),
-      default: false
-    }
-  ]);
+  const confirmReplace = await prompt('Do you want to proceed with replacing the file?', false);
 
   if (!confirmReplace) {
     log.info(chalk.yellow('\n⚠ Operation cancelled by user'));

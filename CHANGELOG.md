@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2025-12-09
+
 ### Added
 - MIT License file
 - Organized project structure with dedicated folders
@@ -16,14 +18,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Moved source template to `src/` directory
-- Moved minified player to `lib/` directory  
+- Moved minified player to `lib/` directory
 - Moved build script to `scripts/` directory
 - Added `dist/` directory for output files
 - Updated all paths and documentation to reflect new structure
+- Build script now uses native `readline` module instead of `inquirer` for Node.js v24 compatibility
+- Added `--yes` / `-y` flag for non-interactive build mode
 
 ### Fixed
 - Implemented workaround for rounded corner flickering in Lottie animations
 - Added ability to disable subframe rendering which resolves flickering issues
+- Fixed build script crash on Node.js v24 due to incompatible inquirer version
 
 ## [0.2.0] - 2025-08-13
 
@@ -70,6 +75,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaces mock animation data with `__[[ANIMATIONDATA]]__` placeholder
 - Supports Node.js 14+ and yarn package manager
 
-[Unreleased]: https://github.com/ivg-design/bm_player_template/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ivg-design/bm_player_template/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ivg-design/bm_player_template/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ivg-design/bm_player_template/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/ivg-design/bm_player_template/releases/tag/v0.1.0
