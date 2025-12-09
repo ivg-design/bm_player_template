@@ -114,15 +114,21 @@
 				display: none;
 			}
 
-			.control-panel.collapsed .toggle-btn {
+			.control-panel.collapsed .toggle-btn,
+			.control-panel.mini.collapsed .toggle-btn {
 				position: fixed;
 				bottom: 20px;
 				left: 50%;
 				transform: translateX(-50%);
-				top: auto;
+				top: auto !important;
 				right: auto;
 				background: rgba(60, 60, 60, 0.95);
+				border: 1px solid rgba(255, 255, 255, 0.3);
 				display: flex;
+				width: 40px;
+				height: 40px;
+				border-radius: 8px;
+				z-index: 1001;
 			}
 
 			/* Mini Mode Button */
