@@ -1269,6 +1269,263 @@
 			.control-panel.mini .segments-btn {
 				display: none;
 			}
+
+			/* Custom Elements Button */
+			.elements-btn {
+				min-width: 45px;
+			}
+
+			.elements-btn svg {
+				opacity: 0.6;
+				transition: opacity 0.2s;
+			}
+
+			.elements-btn.active {
+				background: linear-gradient(135deg, rgba(255, 152, 0, 0.3) 0%, rgba(245, 124, 0, 0.3) 100%);
+				border-color: rgba(255, 152, 0, 0.5);
+			}
+
+			.elements-btn.active svg {
+				opacity: 1;
+				filter: drop-shadow(0 0 3px rgba(255, 152, 0, 0.5));
+			}
+
+			/* Custom Elements Panel */
+			.elements-panel {
+				position: absolute;
+				left: 100%;
+				top: 0;
+				bottom: 0;
+				width: 280px;
+				background: rgba(30, 30, 30, 0.95);
+				backdrop-filter: blur(20px);
+				-webkit-backdrop-filter: blur(20px);
+				border-radius: 0 8px 8px 0;
+				padding: 10px;
+				margin-left: 8px;
+				opacity: 0;
+				transform: translateX(-20px);
+				pointer-events: none;
+				transition: all 0.3s ease;
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				box-shadow: 5px 0 20px rgba(0, 0, 0, 0.3);
+				max-height: 500px;
+			}
+
+			.elements-panel.open {
+				opacity: 1;
+				transform: translateX(0);
+				pointer-events: all;
+			}
+
+			.elements-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding-bottom: 8px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+			}
+
+			.elements-title {
+				font-size: 12px;
+				font-weight: 600;
+				color: #fff;
+				text-transform: uppercase;
+				letter-spacing: 1px;
+			}
+
+			.elements-refresh-btn {
+				background: rgba(255, 152, 0, 0.2);
+				border: 1px solid rgba(255, 152, 0, 0.4);
+				color: #ff9800;
+				padding: 4px 8px;
+				border-radius: 4px;
+				font-size: 10px;
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+
+			.elements-refresh-btn:hover {
+				background: rgba(255, 152, 0, 0.3);
+			}
+
+			.elements-list {
+				flex: 1;
+				overflow-y: auto;
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+
+			.elements-list::-webkit-scrollbar {
+				width: 4px;
+			}
+
+			.elements-list::-webkit-scrollbar-track {
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 2px;
+			}
+
+			.elements-list::-webkit-scrollbar-thumb {
+				background: rgba(255, 255, 255, 0.2);
+				border-radius: 2px;
+			}
+
+			.element-item {
+				background: rgba(255, 255, 255, 0.05);
+				border: 1px solid rgba(255, 255, 255, 0.1);
+				border-radius: 6px;
+				padding: 8px 10px;
+				transition: all 0.2s;
+			}
+
+			.element-item:hover {
+				background: rgba(255, 255, 255, 0.08);
+			}
+
+			.element-item.gradient {
+				border-left: 3px solid #9c27b0;
+			}
+
+			.element-item.shape {
+				border-left: 3px solid #2196f3;
+			}
+
+			.element-item.group {
+				border-left: 3px solid #4caf50;
+			}
+
+			.element-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				margin-bottom: 6px;
+			}
+
+			.element-id {
+				font-size: 11px;
+				font-weight: 600;
+				color: #ff9800;
+				font-family: monospace;
+			}
+
+			.element-type {
+				font-size: 9px;
+				color: #888;
+				text-transform: uppercase;
+				padding: 2px 6px;
+				background: rgba(255, 255, 255, 0.1);
+				border-radius: 3px;
+			}
+
+			.element-controls {
+				display: flex;
+				flex-direction: column;
+				gap: 6px;
+			}
+
+			.element-control-row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+
+			.element-control-label {
+				font-size: 10px;
+				color: #aaa;
+				width: 55px;
+				flex-shrink: 0;
+			}
+
+			.element-control-input {
+				flex: 1;
+				height: 24px;
+				background: rgba(255, 255, 255, 0.1);
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				border-radius: 4px;
+				color: #fff;
+				font-size: 11px;
+				padding: 0 8px;
+			}
+
+			.element-control-input:focus {
+				outline: none;
+				border-color: #ff9800;
+			}
+
+			.element-control-input[type="range"] {
+				padding: 0;
+				cursor: pointer;
+			}
+
+			.element-control-input[type="color"] {
+				padding: 2px;
+				cursor: pointer;
+				width: 50px;
+				flex: none;
+			}
+
+			.element-control-value {
+				font-size: 10px;
+				color: #ff9800;
+				width: 40px;
+				text-align: right;
+				font-family: monospace;
+			}
+
+			.no-elements {
+				color: #666;
+				font-size: 11px;
+				text-align: center;
+				padding: 20px;
+			}
+
+			.gradient-preview {
+				height: 16px;
+				border-radius: 3px;
+				margin-top: 4px;
+				border: 1px solid rgba(255, 255, 255, 0.2);
+			}
+
+			.gradient-stops {
+				display: flex;
+				gap: 4px;
+				margin-top: 6px;
+			}
+
+			.gradient-stop {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				gap: 2px;
+			}
+
+			.gradient-stop input[type="color"] {
+				width: 100%;
+				height: 24px;
+				padding: 0;
+				border: 1px solid rgba(255, 255, 255, 0.2);
+				border-radius: 3px;
+				cursor: pointer;
+				background: transparent;
+			}
+
+			.gradient-stop-label {
+				font-size: 8px;
+				color: #666;
+			}
+
+			/* Hide elements panel in mini mode */
+			.control-panel.mini .elements-panel {
+				display: none;
+			}
+
+			.control-panel.mini .elements-btn {
+				display: none;
+			}
 		</style>
 		<!-- Load Lottie library -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
@@ -1412,6 +1669,13 @@
 								<path d="M96 128C96 92.7 124.7 64 160 64L480 64C515.3 64 544 92.7 544 128L544 512C544 547.3 515.3 576 480 576L160 576C124.7 576 96 547.3 96 512L96 128zM160 128L160 512L480 512L480 128L160 128zM208 192L432 192C440.8 192 448 199.2 448 208C448 216.8 440.8 224 432 224L208 224C199.2 224 192 216.8 192 208C192 199.2 199.2 192 208 192zM208 288L432 288C440.8 288 448 295.2 448 304C448 312.8 440.8 320 432 320L208 320C199.2 320 192 312.8 192 304C192 295.2 199.2 288 208 288zM208 384L432 384C440.8 384 448 391.2 448 400C448 408.8 440.8 416 432 416L208 416C199.2 416 192 408.8 192 400C192 391.2 199.2 384 208 384z"/>
 							</svg>
 						</button>
+
+						<!-- Custom Elements Button -->
+						<button class="control-btn elements-btn" id="elementsBtn" onclick="toggleElementsPanel()" title="View custom elements">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="#ff9800">
+								<path d="M64 112C64 85.5 85.5 64 112 64L528 64C554.5 64 576 85.5 576 112L576 208C576 234.5 554.5 256 528 256L112 256C85.5 256 64 234.5 64 208L64 112zM112 112L112 208L528 208L528 112L112 112zM64 336C64 309.5 85.5 288 112 288L304 288C330.5 288 352 309.5 352 336L352 528C352 554.5 330.5 576 304 576L112 576C85.5 576 64 554.5 64 528L64 336zM112 336L112 528L304 528L304 336L112 336zM400 288L592 288C618.5 288 640 309.5 640 336L640 528C640 554.5 618.5 576 592 576L400 576C373.5 576 352 554.5 352 528L352 336C352 309.5 373.5 288 400 288zM400 336L400 528L592 528L592 336L400 336z"/>
+							</svg>
+						</button>
 					</div>
 				</div>
 
@@ -1430,6 +1694,17 @@
 						</svg>
 						Play Segment
 					</button>
+				</div>
+
+				<!-- Custom Elements Panel (slides out to the right) -->
+				<div class="elements-panel" id="elementsPanel">
+					<div class="elements-header">
+						<span class="elements-title">Custom Elements</span>
+						<button class="elements-refresh-btn" onclick="scanCustomElements()" title="Rescan elements">Refresh</button>
+					</div>
+					<div class="elements-list" id="elementsList">
+						<div class="no-elements">Click refresh to scan for custom elements</div>
+					</div>
 				</div>
 
 				<!-- Panel 3: Progress Bar -->
@@ -2298,6 +2573,235 @@
 					updatePlayPauseButton();
 					updateStopButton();
 					updateProgress();
+				}
+			}
+
+			// Custom Elements panel functions
+			var customElements = [];
+
+			function toggleElementsPanel() {
+				const panel = document.getElementById('elementsPanel');
+				const btn = document.getElementById('elementsBtn');
+
+				panel.classList.toggle('open');
+				btn.classList.toggle('active');
+
+				// Scan for elements when opening
+				if (panel.classList.contains('open')) {
+					scanCustomElements();
+				}
+			}
+
+			function scanCustomElements() {
+				const listEl = document.getElementById('elementsList');
+				customElements = [];
+
+				// Get the SVG element inside lottie container
+				const svg = document.querySelector('#lottie svg');
+				if (!svg) {
+					listEl.innerHTML = '<div class="no-elements">No SVG found. Wait for animation to load.</div>';
+					return;
+				}
+
+				// Find all elements with IDs that are not auto-generated
+				const allElements = svg.querySelectorAll('[id]');
+				allElements.forEach(el => {
+					const id = el.id;
+					// Skip auto-generated Lottie IDs
+					if (id.startsWith('__lottie_element_')) return;
+
+					// Determine element type and collect info
+					const tagName = el.tagName.toLowerCase();
+					let elementType = 'shape';
+					let controls = [];
+
+					if (tagName === 'lineargradient' || tagName === 'radialgradient') {
+						elementType = 'gradient';
+						// Get gradient stops
+						const stops = el.querySelectorAll('stop');
+						const stopColors = [];
+						stops.forEach((stop, i) => {
+							const color = stop.getAttribute('stop-color') || '#000000';
+							stopColors.push({ index: i, color: rgbToHex(color) });
+						});
+						controls.push({ type: 'gradient', stops: stopColors });
+					} else if (tagName === 'g') {
+						elementType = 'group';
+						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
+					} else if (tagName === 'path' || tagName === 'rect' || tagName === 'circle' || tagName === 'ellipse') {
+						elementType = 'shape';
+						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
+
+						// Check for fill
+						const fill = el.getAttribute('fill');
+						if (fill && !fill.startsWith('url(')) {
+							controls.push({ type: 'fill', value: rgbToHex(fill) });
+						}
+
+						// Check for stroke
+						const stroke = el.getAttribute('stroke');
+						if (stroke && stroke !== 'none') {
+							controls.push({ type: 'stroke', value: rgbToHex(stroke) });
+							const strokeWidth = el.getAttribute('stroke-width') || '1';
+							controls.push({ type: 'strokeWidth', value: parseFloat(strokeWidth) });
+						}
+					}
+
+					customElements.push({
+						id: id,
+						element: el,
+						type: elementType,
+						tagName: tagName,
+						controls: controls
+					});
+				});
+
+				renderElementsList();
+			}
+
+			function getComputedOpacity(el) {
+				const style = el.style.opacity;
+				if (style !== '') return parseFloat(style);
+				const attr = el.getAttribute('opacity');
+				if (attr) return parseFloat(attr);
+				return 1;
+			}
+
+			function rgbToHex(color) {
+				if (!color) return '#000000';
+				if (color.startsWith('#')) return color;
+
+				// Handle rgb/rgba format
+				const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+				if (match) {
+					const r = parseInt(match[1]).toString(16).padStart(2, '0');
+					const g = parseInt(match[2]).toString(16).padStart(2, '0');
+					const b = parseInt(match[3]).toString(16).padStart(2, '0');
+					return '#' + r + g + b;
+				}
+
+				return color;
+			}
+
+			function renderElementsList() {
+				const listEl = document.getElementById('elementsList');
+
+				if (customElements.length === 0) {
+					listEl.innerHTML = '<div class="no-elements">No custom elements found.<br><small>Add IDs in After Effects to elements you want to control.</small></div>';
+					return;
+				}
+
+				listEl.innerHTML = '';
+
+				customElements.forEach((item, index) => {
+					const div = document.createElement('div');
+					div.className = 'element-item ' + item.type;
+
+					let controlsHTML = '';
+
+					item.controls.forEach(ctrl => {
+						if (ctrl.type === 'opacity') {
+							controlsHTML += `
+								<div class="element-control-row">
+									<span class="element-control-label">Opacity</span>
+									<input type="range" class="element-control-input" min="0" max="1" step="0.1" value="${ctrl.value}"
+										onchange="updateElementOpacity('${item.id}', this.value)" oninput="this.nextElementSibling.textContent = (this.value * 100).toFixed(0) + '%'">
+									<span class="element-control-value">${(ctrl.value * 100).toFixed(0)}%</span>
+								</div>
+							`;
+						} else if (ctrl.type === 'fill') {
+							controlsHTML += `
+								<div class="element-control-row">
+									<span class="element-control-label">Fill</span>
+									<input type="color" class="element-control-input" value="${ctrl.value}"
+										onchange="updateElementFill('${item.id}', this.value)">
+									<span class="element-control-value">${ctrl.value}</span>
+								</div>
+							`;
+						} else if (ctrl.type === 'stroke') {
+							controlsHTML += `
+								<div class="element-control-row">
+									<span class="element-control-label">Stroke</span>
+									<input type="color" class="element-control-input" value="${ctrl.value}"
+										onchange="updateElementStroke('${item.id}', this.value)">
+									<span class="element-control-value">${ctrl.value}</span>
+								</div>
+							`;
+						} else if (ctrl.type === 'strokeWidth') {
+							controlsHTML += `
+								<div class="element-control-row">
+									<span class="element-control-label">Width</span>
+									<input type="range" class="element-control-input" min="0" max="20" step="0.5" value="${ctrl.value}"
+										onchange="updateElementStrokeWidth('${item.id}', this.value)" oninput="this.nextElementSibling.textContent = this.value + 'px'">
+									<span class="element-control-value">${ctrl.value}px</span>
+								</div>
+							`;
+						} else if (ctrl.type === 'gradient') {
+							let stopsHTML = '';
+							ctrl.stops.forEach((stop, si) => {
+								stopsHTML += `
+									<div class="gradient-stop">
+										<input type="color" value="${stop.color}"
+											onchange="updateGradientStop('${item.id}', ${si}, this.value)">
+										<span class="gradient-stop-label">${si + 1}</span>
+									</div>
+								`;
+							});
+							controlsHTML += `
+								<div class="gradient-stops">${stopsHTML}</div>
+							`;
+						}
+					});
+
+					div.innerHTML = `
+						<div class="element-header">
+							<span class="element-id">#${item.id}</span>
+							<span class="element-type">${item.tagName}</span>
+						</div>
+						<div class="element-controls">
+							${controlsHTML}
+						</div>
+					`;
+
+					listEl.appendChild(div);
+				});
+			}
+
+			function updateElementOpacity(id, value) {
+				const el = document.getElementById(id);
+				if (el) {
+					el.style.opacity = value;
+				}
+			}
+
+			function updateElementFill(id, value) {
+				const el = document.getElementById(id);
+				if (el) {
+					el.setAttribute('fill', value);
+				}
+			}
+
+			function updateElementStroke(id, value) {
+				const el = document.getElementById(id);
+				if (el) {
+					el.setAttribute('stroke', value);
+				}
+			}
+
+			function updateElementStrokeWidth(id, value) {
+				const el = document.getElementById(id);
+				if (el) {
+					el.setAttribute('stroke-width', value);
+				}
+			}
+
+			function updateGradientStop(gradientId, stopIndex, color) {
+				const gradient = document.getElementById(gradientId);
+				if (gradient) {
+					const stops = gradient.querySelectorAll('stop');
+					if (stops[stopIndex]) {
+						stops[stopIndex].setAttribute('stop-color', color);
+					}
 				}
 			}
 

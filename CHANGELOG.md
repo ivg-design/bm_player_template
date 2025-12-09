@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Custom Elements panel**: New side panel that scans Lottie SVG for custom IDs
+  - Automatically detects shapes, groups, and gradients with custom IDs
+  - Controls for opacity, fill color, stroke color, and stroke width
+  - Gradient color picker for each stop
+  - Refresh button to rescan after changes
+
 ## [0.3.0] - 2025-12-09
 
 ### Added
