@@ -2675,26 +2675,43 @@
 			}
 
 			function getComputedOpacity(el) {
-				// Check inline style first
-				const style = el.style.opacity;
-				if (style !== '') return parseFloat(style);
+				// First try getComputedStyle - this gives the actual rendered opacity
+				// accounting for all CSS and inherited values
+				const computedStyle = window.getComputedStyle(el);
+				const computedOpacity = computedStyle.opacity;
 
-				// Check opacity attribute
+				// Check if the element or any parent has explicit opacity set
+				// We need to walk up to find where opacity is actually defined
+
+				// Check element's own opacity attribute
 				const attr = el.getAttribute('opacity');
-				if (attr) return parseFloat(attr);
+				if (attr !== null && attr !== '') return parseFloat(attr);
+
+				// Check element's inline style
+				if (el.style.opacity !== '') return parseFloat(el.style.opacity);
 
 				// Check fill-opacity for shapes
 				const fillOpacity = el.getAttribute('fill-opacity');
-				if (fillOpacity) return parseFloat(fillOpacity);
+				if (fillOpacity !== null && fillOpacity !== '') return parseFloat(fillOpacity);
 
 				// Check parent group opacity (Lottie often sets opacity on parent g element)
 				let parent = el.parentElement;
 				while (parent && parent.tagName.toLowerCase() !== 'svg') {
-					const parentOpacity = parent.style.opacity || parent.getAttribute('opacity');
-					if (parentOpacity !== null && parentOpacity !== '') {
-						return parseFloat(parentOpacity);
+					// Check opacity attribute first (Lottie uses this)
+					const parentAttr = parent.getAttribute('opacity');
+					if (parentAttr !== null && parentAttr !== '') {
+						return parseFloat(parentAttr);
+					}
+					// Then check inline style
+					if (parent.style.opacity !== '') {
+						return parseFloat(parent.style.opacity);
 					}
 					parent = parent.parentElement;
+				}
+
+				// Fallback to computed opacity
+				if (computedOpacity && computedOpacity !== '1') {
+					return parseFloat(computedOpacity);
 				}
 
 				return 1;
@@ -2804,19 +2821,26 @@
 
 			function updateElementOpacity(id, value) {
 				const el = document.getElementById(id);
-				if (el) {
+				if (!el) return;
+
+				// First check if opacity is set on a parent group (Lottie pattern)
+				let parent = el.parentElement;
+				let opacityParent = null;
+				while (parent && parent.tagName.toLowerCase() !== 'svg') {
+					if (parent.getAttribute('opacity') !== null || parent.style.opacity !== '') {
+						opacityParent = parent;
+						break;
+					}
+					parent = parent.parentElement;
+				}
+
+				if (opacityParent) {
+					// Update the parent group where opacity is controlled
+					opacityParent.style.opacity = value;
+					opacityParent.setAttribute('opacity', value);
+				} else {
 					// Set opacity on the element itself
 					el.style.opacity = value;
-
-					// Also try to find and update the parent group if it controls opacity
-					let parent = el.parentElement;
-					while (parent && parent.tagName.toLowerCase() !== 'svg') {
-						if (parent.style.opacity !== '' || parent.getAttribute('opacity')) {
-							parent.style.opacity = value;
-							break;
-						}
-						parent = parent.parentElement;
-					}
 				}
 			}
 
