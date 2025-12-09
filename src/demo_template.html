@@ -116,6 +116,11 @@
 
 			.control-panel.collapsed .toggle-btn {
 				position: fixed;
+				bottom: 20px;
+				left: 50%;
+				transform: translateX(-50%);
+				top: auto;
+				right: auto;
 				background: rgba(60, 60, 60, 0.95);
 				display: flex;
 			}
@@ -1069,6 +1074,195 @@
 			.subframe-btn.active:hover {
 				background: linear-gradient(135deg, rgba(102, 126, 234, 0.4) 0%, rgba(127, 75, 162, 0.4) 100%);
 			}
+
+			/* Segments Button */
+			.segments-btn {
+				min-width: 45px;
+			}
+
+			.segments-btn svg {
+				opacity: 0.6;
+				transition: opacity 0.2s;
+			}
+
+			.segments-btn.active {
+				background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(56, 142, 60, 0.3) 100%);
+				border-color: rgba(76, 175, 80, 0.5);
+			}
+
+			.segments-btn.active svg {
+				opacity: 1;
+				filter: drop-shadow(0 0 3px rgba(76, 175, 80, 0.5));
+			}
+
+			/* Segments Panel */
+			.segments-panel {
+				position: absolute;
+				right: 100%;
+				top: 0;
+				bottom: 0;
+				width: 220px;
+				background: rgba(30, 30, 30, 0.95);
+				backdrop-filter: blur(20px);
+				-webkit-backdrop-filter: blur(20px);
+				border-radius: 8px 0 0 8px;
+				padding: 10px;
+				margin-right: 8px;
+				opacity: 0;
+				transform: translateX(20px);
+				pointer-events: none;
+				transition: all 0.3s ease;
+				display: flex;
+				flex-direction: column;
+				gap: 8px;
+				box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
+				max-height: 400px;
+			}
+
+			.segments-panel.open {
+				opacity: 1;
+				transform: translateX(0);
+				pointer-events: all;
+			}
+
+			.segments-header {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding-bottom: 8px;
+				border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+			}
+
+			.segments-title {
+				font-size: 12px;
+				font-weight: 600;
+				color: #fff;
+				text-transform: uppercase;
+				letter-spacing: 1px;
+			}
+
+			.segments-reset-btn {
+				background: rgba(239, 83, 80, 0.2);
+				border: 1px solid rgba(239, 83, 80, 0.4);
+				color: #ef5350;
+				padding: 4px 8px;
+				border-radius: 4px;
+				font-size: 10px;
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+
+			.segments-reset-btn:hover {
+				background: rgba(239, 83, 80, 0.3);
+			}
+
+			.segments-list {
+				flex: 1;
+				overflow-y: auto;
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+			}
+
+			.segments-list::-webkit-scrollbar {
+				width: 4px;
+			}
+
+			.segments-list::-webkit-scrollbar-track {
+				background: rgba(255, 255, 255, 0.05);
+				border-radius: 2px;
+			}
+
+			.segments-list::-webkit-scrollbar-thumb {
+				background: rgba(255, 255, 255, 0.2);
+				border-radius: 2px;
+			}
+
+			.segment-item {
+				background: rgba(255, 255, 255, 0.05);
+				border: 1px solid transparent;
+				border-radius: 6px;
+				padding: 8px 10px;
+				cursor: pointer;
+				transition: all 0.2s;
+			}
+
+			.segment-item:hover {
+				background: rgba(255, 255, 255, 0.1);
+			}
+
+			.segment-item.selected {
+				background: rgba(76, 175, 80, 0.2);
+				border-color: rgba(76, 175, 80, 0.4);
+			}
+
+			.segment-item.playing {
+				background: rgba(76, 175, 80, 0.3);
+				border-color: rgba(76, 175, 80, 0.6);
+			}
+
+			.segment-name {
+				font-size: 12px;
+				font-weight: 600;
+				color: #fff;
+				margin-bottom: 2px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.segment-range {
+				font-size: 10px;
+				color: #888;
+				font-family: monospace;
+			}
+
+			.segment-play-btn {
+				width: 100%;
+				background: linear-gradient(135deg, rgba(76, 175, 80, 0.3) 0%, rgba(56, 142, 60, 0.3) 100%);
+				border: 1px solid rgba(76, 175, 80, 0.4);
+				color: #4caf50;
+				padding: 8px;
+				border-radius: 6px;
+				font-size: 11px;
+				font-weight: 600;
+				cursor: pointer;
+				transition: all 0.2s;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 6px;
+			}
+
+			.segment-play-btn:hover {
+				background: linear-gradient(135deg, rgba(76, 175, 80, 0.4) 0%, rgba(56, 142, 60, 0.4) 100%);
+			}
+
+			.segment-play-btn:disabled {
+				opacity: 0.5;
+				cursor: not-allowed;
+			}
+
+			.segment-play-btn svg {
+				width: 14px;
+				height: 14px;
+			}
+
+			.no-segments {
+				color: #666;
+				font-size: 11px;
+				text-align: center;
+				padding: 20px;
+			}
+
+			/* Hide segments panel in mini mode */
+			.control-panel.mini .segments-panel {
+				display: none;
+			}
+
+			.control-panel.mini .segments-btn {
+				display: none;
+			}
 		</style>
 		<!-- Load Lottie library -->
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
@@ -1205,7 +1399,31 @@
 								<path d="M96 160C96 124.7 124.7 96 160 96L480 96C515.3 96 544 124.7 544 160L544 480C544 515.3 515.3 544 480 544L160 544C124.7 544 96 515.3 96 480L96 160zM240 164C215.7 164 196 183.7 196 208L196 256C196 280.3 215.7 300 240 300L272 300C296.3 300 316 280.3 316 256L316 208C316 183.7 296.3 164 272 164L240 164zM236 208C236 205.8 237.8 204 240 204L272 204C274.2 204 276 205.8 276 208L276 256C276 258.2 274.2 260 272 260L240 260C237.8 260 236 258.2 236 256L236 208zM376 164C365 164 356 173 356 184C356 193.7 362.9 201.7 372 203.6L372 280C372 291 381 300 392 300C403 300 412 291 412 280L412 184C412 173 403 164 392 164L376 164zM228 360C228 369.7 234.9 377.7 244 379.6L244 456C244 467 253 476 264 476C275 476 284 467 284 456L284 360C284 349 275 340 264 340L248 340C237 340 228 349 228 360zM324 384L324 432C324 456.3 343.7 476 368 476L400 476C424.3 476 444 456.3 444 432L444 384C444 359.7 424.3 340 400 340L368 340C343.7 340 324 359.7 324 384zM368 380L400 380C402.2 380 404 381.8 404 384L404 432C404 434.2 402.2 436 400 436L368 436C365.8 436 364 434.2 364 432L364 384C364 381.8 365.8 380 368 380z"/>
 							</svg>
 						</button>
+
+						<!-- Segments Button -->
+						<button class="control-btn segments-btn" id="segmentsBtn" onclick="toggleSegmentsPanel()" title="View animation segments">
+							<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="#4caf50">
+								<path d="M96 128C96 92.7 124.7 64 160 64L480 64C515.3 64 544 92.7 544 128L544 512C544 547.3 515.3 576 480 576L160 576C124.7 576 96 547.3 96 512L96 128zM160 128L160 512L480 512L480 128L160 128zM208 192L432 192C440.8 192 448 199.2 448 208C448 216.8 440.8 224 432 224L208 224C199.2 224 192 216.8 192 208C192 199.2 199.2 192 208 192zM208 288L432 288C440.8 288 448 295.2 448 304C448 312.8 440.8 320 432 320L208 320C199.2 320 192 312.8 192 304C192 295.2 199.2 288 208 288zM208 384L432 384C440.8 384 448 391.2 448 400C448 408.8 440.8 416 432 416L208 416C199.2 416 192 408.8 192 400C192 391.2 199.2 384 208 384z"/>
+							</svg>
+						</button>
 					</div>
+				</div>
+
+				<!-- Segments Panel (slides out to the left) -->
+				<div class="segments-panel" id="segmentsPanel">
+					<div class="segments-header">
+						<span class="segments-title">Segments</span>
+						<button class="segments-reset-btn" onclick="resetSegment()" title="Reset to full timeline">Reset</button>
+					</div>
+					<div class="segments-list" id="segmentsList">
+						<div class="no-segments">No markers found</div>
+					</div>
+					<button class="segment-play-btn" id="segmentPlayBtn" onclick="playSelectedSegment()" disabled>
+						<svg fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+						</svg>
+						Play Segment
+					</button>
 				</div>
 
 				<!-- Panel 3: Progress Bar -->
@@ -1457,6 +1675,12 @@
 			var isDraggingPosition = false;
 			var positionOffset = { x: 0, y: 0 };
 			var playDirection = 1; // Track play direction for pingpong
+
+			// Segment playback variables
+			var segments = []; // Array of {name, startFrame, endFrame}
+			var selectedSegmentIndex = -1;
+			var isPlayingSegment = false;
+			var currentSegment = null; // {startFrame, endFrame}
 
 			// Initialize function to be called when DOM is ready
 			function initializeAnimation() {
@@ -1886,24 +2110,24 @@
 			function toggleSubframe() {
 				const btn = document.getElementById('subframeBtn');
 				const isEnabled = !btn.classList.contains('active');
-				
+
 				// Toggle button active state
 				btn.classList.toggle('active');
-				
+
 				if (anim) {
 					// Store current state
 					const wasPlaying = isPlaying && !isStopped;
 					const currentFrame = anim.currentFrame;
-					
+
 					// Stop animation to apply changes cleanly
 					anim.stop();
-					
+
 					// Set subframe enabled/disabled
 					anim.setSubframe(isEnabled);
-					
+
 					// Reset to beginning to see the effect immediately
 					anim.goToAndStop(0, true);
-					
+
 					// If it was playing, restart playback
 					if (wasPlaying) {
 						setTimeout(() => {
@@ -1920,6 +2144,154 @@
 						updatePlayPauseButton();
 						updateStopButton();
 					}
+				}
+			}
+
+			// Segments panel functions
+			function extractSegments() {
+				if (!anim || !anim.animationData) return [];
+
+				const markers = anim.animationData.markers || [];
+				const extractedSegments = [];
+
+				// Extract segments from markers
+				// Markers typically have: cm (comment/name), tm (time/frame), dr (duration)
+				for (let i = 0; i < markers.length; i++) {
+					const marker = markers[i];
+					const name = marker.cm || `Segment ${i + 1}`;
+					const startFrame = marker.tm || 0;
+
+					// Calculate end frame
+					let endFrame;
+					if (marker.dr !== undefined && marker.dr > 0) {
+						// If marker has duration, use it
+						endFrame = startFrame + marker.dr;
+					} else if (i < markers.length - 1) {
+						// Otherwise, end at the next marker
+						endFrame = markers[i + 1].tm;
+					} else {
+						// Last marker goes to end of animation
+						endFrame = anim.totalFrames;
+					}
+
+					extractedSegments.push({
+						name: name,
+						startFrame: Math.floor(startFrame),
+						endFrame: Math.floor(endFrame)
+					});
+				}
+
+				return extractedSegments;
+			}
+
+			function populateSegmentsList() {
+				const listEl = document.getElementById('segmentsList');
+				segments = extractSegments();
+
+				if (segments.length === 0) {
+					listEl.innerHTML = '<div class="no-segments">No markers found in this animation</div>';
+					return;
+				}
+
+				listEl.innerHTML = '';
+
+				segments.forEach((segment, index) => {
+					const item = document.createElement('div');
+					item.className = 'segment-item';
+					item.setAttribute('data-index', index);
+					item.onclick = () => selectSegment(index);
+
+					const duration = segment.endFrame - segment.startFrame;
+					const durationSec = anim ? (duration / anim.frameRate).toFixed(2) : 0;
+
+					item.innerHTML = `
+						<div class="segment-name">${segment.name}</div>
+						<div class="segment-range">Frames ${segment.startFrame} - ${segment.endFrame} (${durationSec}s)</div>
+					`;
+
+					listEl.appendChild(item);
+				});
+			}
+
+			function toggleSegmentsPanel() {
+				const panel = document.getElementById('segmentsPanel');
+				const btn = document.getElementById('segmentsBtn');
+
+				panel.classList.toggle('open');
+				btn.classList.toggle('active');
+
+				// Populate segments list when opening
+				if (panel.classList.contains('open')) {
+					populateSegmentsList();
+				}
+			}
+
+			function selectSegment(index) {
+				selectedSegmentIndex = index;
+
+				// Update UI
+				const items = document.querySelectorAll('.segment-item');
+				items.forEach((item, i) => {
+					item.classList.toggle('selected', i === index);
+					item.classList.remove('playing');
+				});
+
+				// Enable play button
+				document.getElementById('segmentPlayBtn').disabled = false;
+
+				// Preview: jump to segment start
+				if (anim && segments[index]) {
+					anim.goToAndStop(segments[index].startFrame, true);
+					updateProgress();
+				}
+			}
+
+			function playSelectedSegment() {
+				if (selectedSegmentIndex < 0 || !segments[selectedSegmentIndex]) return;
+
+				const segment = segments[selectedSegmentIndex];
+				currentSegment = segment;
+				isPlayingSegment = true;
+
+				// Update UI to show playing state
+				const items = document.querySelectorAll('.segment-item');
+				items.forEach((item, i) => {
+					item.classList.toggle('playing', i === selectedSegmentIndex);
+				});
+
+				// Play the segment
+				if (anim) {
+					anim.loop = true;
+					anim.playSegments([segment.startFrame, segment.endFrame], true);
+					isPlaying = true;
+					isStopped = false;
+					updatePlayPauseButton();
+					updateStopButton();
+				}
+			}
+
+			function resetSegment() {
+				isPlayingSegment = false;
+				currentSegment = null;
+				selectedSegmentIndex = -1;
+
+				// Update UI
+				const items = document.querySelectorAll('.segment-item');
+				items.forEach(item => {
+					item.classList.remove('selected', 'playing');
+				});
+				document.getElementById('segmentPlayBtn').disabled = true;
+
+				// Reset animation to full timeline
+				if (anim) {
+					anim.resetSegments(true);
+					anim.loop = loopMode === 'loop';
+					anim.goToAndStop(0, true);
+					isPlaying = false;
+					isStopped = true;
+					updatePlayPauseButton();
+					updateStopButton();
+					updateProgress();
 				}
 			}
 

@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Subframe rendering toggle button to address rounded corner flickering issues
 - Visual feedback for subframe toggle state (active/inactive)
 - Auto-reset animation when toggling subframe to immediately show effect
+- **Segments panel**: New side panel to view and play marker-based animation segments
+  - Lists all segments with names and frame ranges
+  - Click to select and preview a segment
+  - Play Segment button to loop selected segment
+  - Reset button to return to full timeline playback
 
 ### Changed
 - Moved source template to `src/` directory
@@ -29,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented workaround for rounded corner flickering in Lottie animations
 - Added ability to disable subframe rendering which resolves flickering issues
 - Fixed build script crash on Node.js v24 due to incompatible inquirer version
+- Fixed collapse button not appearing when collapsing from minimized mode
 
 ## [0.2.0] - 2025-08-13
 
