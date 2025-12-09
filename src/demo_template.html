@@ -2679,7 +2679,8 @@
 
 					} else if (tagName === 'text' || tagName === 'tspan') {
 						elementType = 'text';
-						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
+						const opacityCtrl = findOpacityController(el);
+						controls.push({ type: 'opacity', value: opacityCtrl.value, opacityController: opacityCtrl });
 						detectFillStroke(el, controls);
 						// Add text content control
 						const textContent = el.textContent || '';
@@ -2689,13 +2690,15 @@
 
 					} else if (tagName === 'g') {
 						elementType = 'group';
-						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
+						const opacityCtrl = findOpacityController(el);
+						controls.push({ type: 'opacity', value: opacityCtrl.value, opacityController: opacityCtrl });
 						// Check if group has fill/stroke (sometimes set on groups)
 						detectFillStroke(el, controls);
 
 					} else if (tagName === 'path' || tagName === 'rect' || tagName === 'circle' || tagName === 'ellipse' || tagName === 'line' || tagName === 'polyline' || tagName === 'polygon') {
 						elementType = 'shape';
-						controls.push({ type: 'opacity', value: getComputedOpacity(el) });
+						const opacityCtrl = findOpacityController(el);
+						controls.push({ type: 'opacity', value: opacityCtrl.value, opacityController: opacityCtrl });
 						detectFillStroke(el, controls);
 					}
 
@@ -2714,47 +2717,51 @@
 				renderElementsList();
 			}
 
-			function getComputedOpacity(el) {
-				// First try getComputedStyle - this gives the actual rendered opacity
-				// accounting for all CSS and inherited values
-				const computedStyle = window.getComputedStyle(el);
-				const computedOpacity = computedStyle.opacity;
-
-				// Check if the element or any parent has explicit opacity set
-				// We need to walk up to find where opacity is actually defined
-
-				// Check element's own opacity attribute
+			// Find the element that controls opacity for a given element
+			// Returns {element, value} where element is the actual DOM node controlling opacity
+			function findOpacityController(el) {
+				// Check element's own opacity attribute first
 				const attr = el.getAttribute('opacity');
-				if (attr !== null && attr !== '') return parseFloat(attr);
+				if (attr !== null && attr !== '') {
+					return { element: el, value: parseFloat(attr), useAttribute: true };
+				}
 
 				// Check element's inline style
-				if (el.style.opacity !== '') return parseFloat(el.style.opacity);
+				if (el.style.opacity !== '') {
+					return { element: el, value: parseFloat(el.style.opacity), useAttribute: false };
+				}
 
 				// Check fill-opacity for shapes
 				const fillOpacity = el.getAttribute('fill-opacity');
-				if (fillOpacity !== null && fillOpacity !== '') return parseFloat(fillOpacity);
+				if (fillOpacity !== null && fillOpacity !== '') {
+					return { element: el, value: parseFloat(fillOpacity), useAttribute: true, attrName: 'fill-opacity' };
+				}
 
-				// Check parent group opacity (Lottie often sets opacity on parent g element)
-				let parent = el.parentElement;
-				while (parent && parent.tagName.toLowerCase() !== 'svg') {
-					// Check opacity attribute first (Lottie uses this)
+				// Check IMMEDIATE parent only (not grandparents)
+				// This prevents the issue where two sibling elements share a grandparent
+				const parent = el.parentElement;
+				if (parent && parent.tagName.toLowerCase() === 'g') {
 					const parentAttr = parent.getAttribute('opacity');
 					if (parentAttr !== null && parentAttr !== '') {
-						return parseFloat(parentAttr);
+						return { element: parent, value: parseFloat(parentAttr), useAttribute: true };
 					}
-					// Then check inline style
 					if (parent.style.opacity !== '') {
-						return parseFloat(parent.style.opacity);
+						return { element: parent, value: parseFloat(parent.style.opacity), useAttribute: false };
 					}
-					parent = parent.parentElement;
 				}
 
-				// Fallback to computed opacity
+				// Use computed style as fallback
+				const computedStyle = window.getComputedStyle(el);
+				const computedOpacity = computedStyle.opacity;
 				if (computedOpacity && computedOpacity !== '1') {
-					return parseFloat(computedOpacity);
+					return { element: el, value: parseFloat(computedOpacity), useAttribute: false };
 				}
 
-				return 1;
+				return { element: el, value: 1, useAttribute: false };
+			}
+
+			function getComputedOpacity(el) {
+				return findOpacityController(el).value;
 			}
 
 			function rgbToHex(color) {
@@ -2795,7 +2802,7 @@
 								<div class="element-control-row">
 									<span class="element-control-label">Opacity</span>
 									<input type="range" class="element-control-input" min="0" max="1" step="0.1" value="${ctrl.value}"
-										onchange="updateElementOpacity('${item.id}', this.value)" oninput="this.nextElementSibling.textContent = (this.value * 100).toFixed(0) + '%'">
+										onchange="updateElementOpacity(${index}, this.value)" oninput="this.nextElementSibling.textContent = (this.value * 100).toFixed(0) + '%'">
 									<span class="element-control-value">${(ctrl.value * 100).toFixed(0)}%</span>
 								</div>
 							`;
@@ -2871,29 +2878,23 @@
 				});
 			}
 
-			function updateElementOpacity(id, value) {
-				const el = document.getElementById(id);
-				if (!el) return;
+			function updateElementOpacity(elementIndex, value) {
+				const item = lottieCustomElements[elementIndex];
+				if (!item) return;
 
-				// First check if opacity is set on a parent group (Lottie pattern)
-				let parent = el.parentElement;
-				let opacityParent = null;
-				while (parent && parent.tagName.toLowerCase() !== 'svg') {
-					if (parent.getAttribute('opacity') !== null || parent.style.opacity !== '') {
-						opacityParent = parent;
-						break;
-					}
-					parent = parent.parentElement;
-				}
+				// Find the opacity control in this element's controls
+				const opacityCtrl = item.controls.find(c => c.type === 'opacity');
+				if (!opacityCtrl || !opacityCtrl.opacityController) return;
 
-				if (opacityParent) {
-					// Update the parent group where opacity is controlled
-					opacityParent.style.opacity = value;
-					opacityParent.setAttribute('opacity', value);
-				} else {
-					// Set opacity on the element itself
-					el.style.opacity = value;
+				const controller = opacityCtrl.opacityController;
+				const targetEl = controller.element;
+
+				if (controller.useAttribute) {
+					const attrName = controller.attrName || 'opacity';
+					targetEl.setAttribute(attrName, value);
 				}
+				// Also set style for immediate visual feedback
+				targetEl.style.opacity = value;
 			}
 
 			function updateElementFill(id, value) {
@@ -2924,6 +2925,10 @@
 				}
 			}
 
+			// Store gradient modifications to persist across Lottie visibility changes
+			var gradientModifications = {};
+			var gradientObserver = null;
+
 			function updateGradientStop(gradientId, stopIndex, color) {
 				const gradient = document.getElementById(gradientId);
 				if (gradient) {
@@ -2932,6 +2937,69 @@
 						stops[stopIndex].setAttribute('stop-color', color);
 					}
 				}
+
+				// Store the modification for persistence
+				if (!gradientModifications[gradientId]) {
+					gradientModifications[gradientId] = {};
+				}
+				gradientModifications[gradientId][stopIndex] = color;
+
+				// Start observing if not already
+				startGradientObserver();
+			}
+
+			function applyStoredGradientChanges() {
+				for (const gradientId in gradientModifications) {
+					const gradient = document.getElementById(gradientId);
+					if (gradient) {
+						const stops = gradient.querySelectorAll('stop');
+						const mods = gradientModifications[gradientId];
+						for (const stopIndex in mods) {
+							if (stops[stopIndex]) {
+								stops[stopIndex].setAttribute('stop-color', mods[stopIndex]);
+							}
+						}
+					}
+				}
+			}
+
+			function startGradientObserver() {
+				if (gradientObserver) return; // Already observing
+
+				const svg = document.querySelector('#lottie svg');
+				if (!svg) return;
+
+				gradientObserver = new MutationObserver(function(mutations) {
+					// Check if any gradient-related changes occurred
+					let shouldReapply = false;
+					for (const mutation of mutations) {
+						// Check for added nodes that might be gradients or contain gradients
+						if (mutation.addedNodes.length > 0) {
+							shouldReapply = true;
+							break;
+						}
+						// Check for attribute changes on gradients
+						if (mutation.type === 'attributes' && mutation.target.tagName) {
+							const tagName = mutation.target.tagName.toLowerCase();
+							if (tagName === 'lineargradient' || tagName === 'radialgradient' || tagName === 'stop') {
+								shouldReapply = true;
+								break;
+							}
+						}
+					}
+
+					if (shouldReapply) {
+						// Use requestAnimationFrame to batch updates
+						requestAnimationFrame(applyStoredGradientChanges);
+					}
+				});
+
+				gradientObserver.observe(svg, {
+					childList: true,
+					subtree: true,
+					attributes: true,
+					attributeFilter: ['stop-color', 'style', 'display', 'visibility']
+				});
 			}
 
 			// Panel toggle
