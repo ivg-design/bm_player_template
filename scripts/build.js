@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const readline = require('readline');
 const chalk = require('chalk');
 const log = require('loglevel');
@@ -38,13 +39,31 @@ function prompt(question, defaultValue = false) {
   });
 }
 
+// Detect platform and get Bodymovin installation path
+function getBodymovinPath() {
+  const platform = os.platform();
+
+  if (platform === 'darwin') {
+    // macOS
+    return '/Library/Application Support/Adobe/CEP/extensions/bodymovin/assets/player/';
+  } else if (platform === 'win32') {
+    // Windows - use APPDATA environment variable
+    const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
+    return path.join(appData, 'Adobe', 'CEP', 'extensions', 'bodymovin', 'assets', 'player');
+  } else {
+    // Unsupported platform - return null and handle in main
+    return null;
+  }
+}
+
 // Configuration
 const CONFIG = {
   sourceTemplate: path.join(__dirname, '..', 'src', 'demo_template.html'),
   minifiedPlayer: path.join(__dirname, '..', 'lib', 'minified_bm_player.min.js'),
-  targetDir: '/Library/Application Support/Adobe/CEP/extensions/bodymovin/assets/player/',
+  targetDir: getBodymovinPath(),
   targetFile: 'demo.html',
-  animationPlaceholder: '__[[ANIMATIONDATA]]__'
+  animationPlaceholder: '__[[ANIMATIONDATA]]__',
+  platform: os.platform()
 };
 
 // Utility functions
@@ -219,10 +238,24 @@ async function processTemplate() {
 async function main() {
   log.info(chalk.bold.cyan('\n🚀 Bodymovin Template Builder\n'));
   log.info(chalk.gray('This script will prepare the template for the bodymovin plugin'));
-  
+
+  // Show platform info
+  const platformNames = {
+    'darwin': 'macOS',
+    'win32': 'Windows',
+    'linux': 'Linux'
+  };
+  log.info(chalk.gray('  Platform:'), chalk.cyan(platformNames[CONFIG.platform] || CONFIG.platform));
+
+  // Check if platform is supported
+  if (!CONFIG.targetDir) {
+    log.warn(chalk.yellow('\n⚠ Unsupported platform. Only macOS and Windows are supported.'));
+    log.info(chalk.gray('  You can still process the template and save it to a custom location.'));
+  }
+
   // Check files
   const checks = await checkFiles();
-  
+
   if (!checks.templateExists || !checks.playerExists) {
     log.error(chalk.red('\n❌ Required source files are missing!'));
     process.exit(1);

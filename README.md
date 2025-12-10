@@ -177,6 +177,48 @@ node scripts/build.js
 <!-- Animation will load with mock data for testing -->
 ```
 
+### Standalone Binaries
+
+You can build standalone executables that don't require Node.js to be installed:
+
+```bash
+# Install dependencies first
+yarn install
+
+# Build for your current platform
+yarn package
+
+# Build for specific platforms
+yarn package:mac-intel   # macOS Intel (x64)
+yarn package:mac-arm     # macOS Apple Silicon (ARM64) - must run on ARM Mac
+yarn package:win         # Windows 64-bit
+```
+
+Output binaries are placed in `dist/bin/`:
+- `bm-player-template-macos-x64` - macOS Intel
+- `bm-player-template-macos-arm64` - macOS Apple Silicon (M1/M2/M3)
+- `bm-player-template.exe` - Windows 64-bit
+
+> **Note:** ARM64 binaries must be built on an ARM Mac. Cross-compilation from Intel to ARM is not supported.
+
+#### Using Standalone Binary
+
+Simply run the binary - no Node.js or npm required:
+
+```bash
+# macOS Intel
+./bm-player-template-macos-x64
+
+# macOS Apple Silicon
+./bm-player-template-macos-arm64
+
+# Windows
+bm-player-template.exe
+
+# With auto-yes flag (skip prompts)
+./bm-player-template-macos-x64 --yes
+```
+
 ### Player Controls Guide
 
 | Control | Function | Keyboard Shortcut |

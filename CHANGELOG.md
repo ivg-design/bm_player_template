@@ -21,6 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Mini mode panels**: Segments and Custom Elements panels now available in mini mode
   - Panels appear above the mini player when opened
   - Toggle buttons visible in compact view
+- **Standalone binaries**: Build self-contained executables using pkg
+  - macOS Intel (x64), macOS Apple Silicon (arm64), Windows (x64)
+  - No Node.js or npm required to run
+  - ARM64 must be built on ARM Mac (no cross-compilation)
+- **Cross-platform support**: Build script now detects OS and uses correct paths
+  - macOS: `/Library/Application Support/Adobe/CEP/extensions/bodymovin/`
+  - Windows: `%APPDATA%\Adobe\CEP\extensions\bodymovin\`
 
 ### Fixed
 - Elements with same ID now show single control (affects all instances)

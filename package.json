@@ -3,13 +3,38 @@
   "version": "0.4.0",
   "description": "Bodymovin player template builder",
   "main": "scripts/build.js",
+  "bin": {
+    "bm-build": "scripts/build.js"
+  },
   "scripts": {
-    "build": "node scripts/build.js"
+    "build": "node scripts/build.js",
+    "package": "pkg . --out-path dist/bin",
+    "package:mac-intel": "pkg . --targets node18-macos-x64 --out-path dist/bin",
+    "package:mac-arm": "pkg . --targets node18-macos-arm64 --out-path dist/bin",
+    "package:win": "pkg . --targets node18-win-x64 --out-path dist/bin",
+    "package:all": "pkg . --targets node18-macos-x64,node18-macos-arm64,node18-win-x64 --out-path dist/bin"
+  },
+  "pkg": {
+    "scripts": "scripts/build.js",
+    "assets": [
+      "src/**/*",
+      "lib/**/*",
+      "node_modules/**/*"
+    ],
+    "targets": [
+      "node18-macos-x64",
+      "node18-macos-arm64",
+      "node18-win-x64"
+    ],
+    "outputPath": "dist/bin"
   },
   "author": "IVG Design",
   "license": "MIT",
   "dependencies": {
     "chalk": "^4.1.2",
     "loglevel": "^1.9.1"
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.10.1"
   }
 }
