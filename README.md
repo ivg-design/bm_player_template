@@ -106,8 +106,7 @@ This project serves as a bridge between animation creation in After Effects and 
 
 ### Prerequisites
 
-- **Node.js** 14.0 or higher
-- **Yarn** package manager (recommended) or npm
+- **Node.js** 14.0 or higher (that's it - zero npm dependencies!)
 - **Adobe After Effects** with Bodymovin extension (for integration)
 - Write access to Adobe CEP extensions directory
 
@@ -119,18 +118,12 @@ This project serves as a bridge between animation creation in After Effects and 
    cd bm_player_template
    ```
 
-2. **Install dependencies**
+2. **Run the build** (no npm install needed!)
    ```bash
-   yarn install
-   # or using npm
-   npm install
+   node scripts/build.js
    ```
 
-3. **Verify installation**
-   ```bash
-   # Check that all files are present
-   ls -la src/ lib/ scripts/
-   ```
+> **Zero Dependencies**: The build script uses only Node.js built-in modules. No `npm install` required!
 
 ## Usage
 
@@ -175,48 +168,6 @@ node scripts/build.js
 ```html
 <!-- Open src/demo_template.html in browser -->
 <!-- Animation will load with mock data for testing -->
-```
-
-### Standalone Binaries
-
-You can build standalone executables that don't require Node.js to be installed:
-
-```bash
-# Install dependencies first
-yarn install
-
-# Build for your current platform
-yarn package
-
-# Build for specific platforms
-yarn package:mac-intel   # macOS Intel (x64)
-yarn package:mac-arm     # macOS Apple Silicon (ARM64) - must run on ARM Mac
-yarn package:win         # Windows 64-bit
-```
-
-Output binaries are placed in `dist/bin/`:
-- `bm-player-template-macos-x64` - macOS Intel
-- `bm-player-template-macos-arm64` - macOS Apple Silicon (M1/M2/M3)
-- `bm-player-template.exe` - Windows 64-bit
-
-> **Note:** ARM64 binaries must be built on an ARM Mac. Cross-compilation from Intel to ARM is not supported.
-
-#### Using Standalone Binary
-
-Simply run the binary - no Node.js or npm required:
-
-```bash
-# macOS Intel
-./bm-player-template-macos-x64
-
-# macOS Apple Silicon
-./bm-player-template-macos-arm64
-
-# Windows
-bm-player-template.exe
-
-# With auto-yes flag (skip prompts)
-./bm-player-template-macos-x64 --yes
 ```
 
 ### Player Controls Guide

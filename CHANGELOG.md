@@ -21,10 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Mini mode panels**: Segments and Custom Elements panels now available in mini mode
   - Panels appear above the mini player when opened
   - Toggle buttons visible in compact view
-- **Standalone binaries**: Build self-contained executables using pkg
-  - macOS Intel (x64), macOS Apple Silicon (arm64), Windows (x64)
-  - No Node.js or npm required to run
-  - ARM64 must be built on ARM Mac (no cross-compilation)
+- **Zero dependencies**: Build script now uses only Node.js built-ins
+  - No `npm install` required - just run `node scripts/build.js`
+  - Colored terminal output using ANSI codes
+  - 10KB script vs 73MB bundled binary
 - **Cross-platform support**: Build script now detects OS and uses correct paths
   - macOS: `/Library/Application Support/Adobe/CEP/extensions/bodymovin/`
   - Windows: `%APPDATA%\Adobe\CEP\extensions\bodymovin\`

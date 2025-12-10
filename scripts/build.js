@@ -4,21 +4,27 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const readline = require('readline');
-const chalk = require('chalk');
-const log = require('loglevel');
 
-// Set up logging
-log.setLevel('info');
+// ANSI color codes (works in all modern terminals)
+const c = {
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  cyan: '\x1b[36m',
+  gray: '\x1b[90m'
+};
 
 // Parse command line arguments
 const args = process.argv.slice(2);
 const autoYes = args.includes('--yes') || args.includes('-y');
 
-// Simple prompt function using native readline
+// Simple prompt function
 function prompt(question, defaultValue = false) {
-  if (autoYes) {
-    return Promise.resolve(true);
-  }
+  if (autoYes) return Promise.resolve(true);
 
   return new Promise((resolve) => {
     const rl = readline.createInterface({
@@ -30,30 +36,22 @@ function prompt(question, defaultValue = false) {
     rl.question(`${question} ${hint} `, (answer) => {
       rl.close();
       const normalized = answer.trim().toLowerCase();
-      if (normalized === '') {
-        resolve(defaultValue);
-      } else {
-        resolve(normalized === 'y' || normalized === 'yes');
-      }
+      if (normalized === '') resolve(defaultValue);
+      else resolve(normalized === 'y' || normalized === 'yes');
     });
   });
 }
 
-// Detect platform and get Bodymovin installation path
+// Detect platform and get Bodymovin path
 function getBodymovinPath() {
   const platform = os.platform();
-
   if (platform === 'darwin') {
-    // macOS
     return '/Library/Application Support/Adobe/CEP/extensions/bodymovin/assets/player/';
   } else if (platform === 'win32') {
-    // Windows - use APPDATA environment variable
     const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
     return path.join(appData, 'Adobe', 'CEP', 'extensions', 'bodymovin', 'assets', 'player');
-  } else {
-    // Unsupported platform - return null and handle in main
-    return null;
   }
+  return null;
 }
 
 // Configuration
@@ -68,266 +66,213 @@ const CONFIG = {
 
 // Utility functions
 function fileExists(filePath) {
-  try {
-    return fs.existsSync(filePath);
-  } catch (error) {
-    return false;
-  }
+  try { return fs.existsSync(filePath); }
+  catch { return false; }
 }
 
 function readFile(filePath) {
-  try {
-    return fs.readFileSync(filePath, 'utf8');
-  } catch (error) {
-    log.error(`Error reading file ${filePath}:`, error.message);
-    return null;
-  }
+  try { return fs.readFileSync(filePath, 'utf8'); }
+  catch (e) { console.error(`${c.red}Error reading ${filePath}: ${e.message}${c.reset}`); return null; }
 }
 
 function writeFile(filePath, content) {
-  try {
-    fs.writeFileSync(filePath, content, 'utf8');
-    return true;
-  } catch (error) {
-    log.error(`Error writing file ${filePath}:`, error.message);
-    return false;
-  }
+  try { fs.writeFileSync(filePath, content, 'utf8'); return true; }
+  catch (e) { console.error(`${c.red}Error writing ${filePath}: ${e.message}${c.reset}`); return false; }
 }
 
 function getBackupName() {
   const now = new Date();
-  const year = String(now.getFullYear()).slice(-2);
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  const hour = String(now.getHours()).padStart(2, '0');
-  const minute = String(now.getMinutes()).padStart(2, '0');
-  return `demo.old.${year}${month}${day}-${hour}${minute}.html`;
+  const ts = [
+    String(now.getFullYear()).slice(-2),
+    String(now.getMonth() + 1).padStart(2, '0'),
+    String(now.getDate()).padStart(2, '0'),
+    '-',
+    String(now.getHours()).padStart(2, '0'),
+    String(now.getMinutes()).padStart(2, '0')
+  ].join('');
+  return `demo.old.${ts}.html`;
 }
 
 async function checkFiles() {
-  log.info(chalk.blue('\n📁 Checking source files...'));
-  
+  console.log(`${c.blue}\n📁 Checking source files...${c.reset}`);
+
   const checks = {
     templateExists: fileExists(CONFIG.sourceTemplate),
     playerExists: fileExists(CONFIG.minifiedPlayer),
-    targetDirExists: fileExists(CONFIG.targetDir),
-    targetFileExists: fileExists(path.join(CONFIG.targetDir, CONFIG.targetFile))
+    targetDirExists: CONFIG.targetDir && fileExists(CONFIG.targetDir),
+    targetFileExists: CONFIG.targetDir && fileExists(path.join(CONFIG.targetDir, CONFIG.targetFile))
   };
 
-  log.info(chalk.gray('  Template file:'), checks.templateExists ? chalk.green('✓ Found') : chalk.red('✗ Not found'));
-  log.info(chalk.gray('  Minified player:'), checks.playerExists ? chalk.green('✓ Found') : chalk.red('✗ Not found'));
-  log.info(chalk.gray('  Target directory:'), checks.targetDirExists ? chalk.green('✓ Found') : chalk.red('✗ Not found'));
-  log.info(chalk.gray('  Existing demo.html:'), checks.targetFileExists ? chalk.yellow('⚠ Will be backed up') : chalk.gray('None'));
+  const yes = `${c.green}✓ Found${c.reset}`;
+  const no = `${c.red}✗ Not found${c.reset}`;
+
+  console.log(`${c.gray}  Template file:${c.reset}`, checks.templateExists ? yes : no);
+  console.log(`${c.gray}  Minified player:${c.reset}`, checks.playerExists ? yes : no);
+  console.log(`${c.gray}  Target directory:${c.reset}`, checks.targetDirExists ? yes : no);
+  console.log(`${c.gray}  Existing demo.html:${c.reset}`, checks.targetFileExists ? `${c.yellow}⚠ Will be backed up${c.reset}` : `${c.gray}None${c.reset}`);
 
   return checks;
 }
 
 async function processTemplate() {
-  log.info(chalk.blue('\n🔧 Processing template...'));
-  
-  // Read source files
+  console.log(`${c.blue}\n🔧 Processing template...${c.reset}`);
+
   const templateContent = readFile(CONFIG.sourceTemplate);
   const playerContent = readFile(CONFIG.minifiedPlayer);
-  
+
   if (!templateContent || !playerContent) {
-    log.error(chalk.red('Failed to read source files'));
+    console.error(`${c.red}Failed to read source files${c.reset}`);
     return null;
   }
 
   let processedContent = templateContent;
-  let replacements = [];
 
-  // Step 1: Remove CDN script tag for lottie player
+  // Step 1: Remove CDN script tags
   const cdnScriptPattern = /<script[^>]*src=["'][^"']*lottie[^"']*\.js["'][^>]*><\/script>/gi;
   const cdnMatches = processedContent.match(cdnScriptPattern);
   if (cdnMatches) {
     processedContent = processedContent.replace(cdnScriptPattern, '');
-    replacements.push({
-      action: 'Removed CDN script',
-      count: cdnMatches.length
-    });
-    log.info(chalk.gray('  ✓ Removed'), chalk.cyan(cdnMatches.length), chalk.gray('CDN script tag(s)'));
+    console.log(`${c.gray}  ✓ Removed${c.reset} ${c.cyan}${cdnMatches.length}${c.reset} ${c.gray}CDN script tag(s)${c.reset}`);
   }
 
-  // Step 2: Replace the content between build markers or inject if not found
+  // Step 2: Replace/inject player
   const buildMarkerPattern = /<!-- build:scripto -->[\s\S]*?<!-- endbuild -->/;
   const hasMarkers = buildMarkerPattern.test(processedContent);
-  
+  const escapedPlayerContent = playerContent.replace(/\$/g, '$$$$');
+
   if (hasMarkers) {
-    // Replace existing content between markers
-    const escapedPlayerContent = playerContent.replace(/\$/g, '$$$$');
-    const replacementContent = `<!-- build:scripto -->\n<script>\n${escapedPlayerContent}\n</script>\n<!-- endbuild -->`;
-    processedContent = processedContent.replace(buildMarkerPattern, replacementContent);
-    replacements.push({
-      action: 'Replaced player content',
-      location: 'Between build markers'
-    });
-    log.info(chalk.gray('  ✓ Replaced content between build markers'));
+    const replacement = `<!-- build:scripto -->\n<script>\n${escapedPlayerContent}\n</script>\n<!-- endbuild -->`;
+    processedContent = processedContent.replace(buildMarkerPattern, replacement);
+    console.log(`${c.gray}  ✓ Replaced content between build markers${c.reset}`);
   } else {
-    // Inject after <body> tag if markers don't exist
     const bodyTagPattern = /(<body[^>]*>)/i;
     const bodyMatch = processedContent.match(bodyTagPattern);
     if (bodyMatch) {
-      const injectionPoint = bodyMatch[0];
-      const escapedPlayerContent = playerContent.replace(/\$/g, '$$$$');
-      const injectionContent = `${injectionPoint}\n<!-- build:scripto -->\n<script>\n${escapedPlayerContent}\n</script>\n<!-- endbuild -->`;
-      processedContent = processedContent.replace(bodyTagPattern, () => injectionContent);
-      replacements.push({
-        action: 'Injected minified player',
-        location: 'After <body> tag'
-      });
-      log.info(chalk.gray('  ✓ Injected minified player after <body> tag'));
+      const injection = `${bodyMatch[0]}\n<!-- build:scripto -->\n<script>\n${escapedPlayerContent}\n</script>\n<!-- endbuild -->`;
+      processedContent = processedContent.replace(bodyTagPattern, () => injection);
+      console.log(`${c.gray}  ✓ Injected minified player after <body> tag${c.reset}`);
     } else {
-      log.error(chalk.red('  ✗ Could not find <body> tag'));
+      console.error(`${c.red}  ✗ Could not find <body> tag${c.reset}`);
       return null;
     }
   }
 
-  // Step 3: Replace animationData with placeholder
-  // Look for the mock animationData variable
+  // Step 3: Replace animationData
   const animationDataPattern = /var\s+animationData\s*=\s*({[\s\S]*?});/g;
-  const animationMatches = processedContent.match(animationDataPattern);
-  
-  if (animationMatches) {
-    processedContent = processedContent.replace(
-      animationDataPattern,
-      `var animationData = "${CONFIG.animationPlaceholder}";`
-    );
-    replacements.push({
-      action: 'Replaced animationData',
-      with: CONFIG.animationPlaceholder
-    });
-    log.info(chalk.gray('  ✓ Replaced animationData with placeholder'));
+  if (processedContent.match(animationDataPattern)) {
+    processedContent = processedContent.replace(animationDataPattern, `var animationData = "${CONFIG.animationPlaceholder}";`);
+    console.log(`${c.gray}  ✓ Replaced animationData with placeholder${c.reset}`);
   } else {
-    // If no mock data found, look for existing placeholder
-    const placeholderPattern = new RegExp(`var\\s+animationData\\s*=\\s*"${CONFIG.animationPlaceholder.replace(/[[\]]/g, '\\$&')}"`, 'g');
-    if (processedContent.match(placeholderPattern)) {
-      log.info(chalk.gray('  ℹ Placeholder already exists'));
+    const placeholderExists = processedContent.includes(CONFIG.animationPlaceholder);
+    if (placeholderExists) {
+      console.log(`${c.gray}  ℹ Placeholder already exists${c.reset}`);
     } else {
-      log.warn(chalk.yellow('  ⚠ No animationData variable found to replace'));
+      console.log(`${c.yellow}  ⚠ No animationData variable found${c.reset}`);
     }
   }
 
-  // Step 4: Verify the replacements
-  log.info(chalk.blue('\n✅ Verification:'));
-  
-  // Check if player was injected
-  const hasPlayerScript = processedContent.includes('<!-- build:scripto -->') && 
-                          processedContent.includes('<!-- endbuild -->');
-  log.info(chalk.gray('  Player injection:'), hasPlayerScript ? chalk.green('✓ Verified') : chalk.red('✗ Failed'));
-  
-  // Check if placeholder is present
+  // Step 4: Verify
+  console.log(`${c.blue}\n✅ Verification:${c.reset}`);
+
+  const hasPlayerScript = processedContent.includes('<!-- build:scripto -->') && processedContent.includes('<!-- endbuild -->');
   const hasPlaceholder = processedContent.includes(CONFIG.animationPlaceholder);
-  log.info(chalk.gray('  Animation placeholder:'), hasPlaceholder ? chalk.green('✓ Verified') : chalk.red('✗ Failed'));
-  
-  // Check if CDN scripts are removed
   const hasCDN = cdnScriptPattern.test(processedContent);
-  log.info(chalk.gray('  CDN scripts removed:'), !hasCDN ? chalk.green('✓ Verified') : chalk.red('✗ Failed'));
+
+  console.log(`${c.gray}  Player injection:${c.reset}`, hasPlayerScript ? `${c.green}✓ Verified${c.reset}` : `${c.red}✗ Failed${c.reset}`);
+  console.log(`${c.gray}  Animation placeholder:${c.reset}`, hasPlaceholder ? `${c.green}✓ Verified${c.reset}` : `${c.red}✗ Failed${c.reset}`);
+  console.log(`${c.gray}  CDN scripts removed:${c.reset}`, !hasCDN ? `${c.green}✓ Verified${c.reset}` : `${c.red}✗ Failed${c.reset}`);
 
   if (!hasPlayerScript || !hasPlaceholder || hasCDN) {
-    log.error(chalk.red('\n❌ Template processing failed verification'));
+    console.error(`${c.red}\n❌ Template processing failed verification${c.reset}`);
     return null;
   }
 
-  return {
-    content: processedContent,
-    replacements
-  };
+  return { content: processedContent };
 }
 
 async function main() {
-  log.info(chalk.bold.cyan('\n🚀 Bodymovin Template Builder\n'));
-  log.info(chalk.gray('This script will prepare the template for the bodymovin plugin'));
+  console.log(`${c.bold}${c.cyan}\n🚀 Bodymovin Template Builder${c.reset}\n`);
+  console.log(`${c.gray}This script will prepare the template for the bodymovin plugin${c.reset}`);
 
-  // Show platform info
-  const platformNames = {
-    'darwin': 'macOS',
-    'win32': 'Windows',
-    'linux': 'Linux'
-  };
-  log.info(chalk.gray('  Platform:'), chalk.cyan(platformNames[CONFIG.platform] || CONFIG.platform));
+  // Platform info
+  const platformNames = { darwin: 'macOS', win32: 'Windows', linux: 'Linux' };
+  console.log(`${c.gray}  Platform:${c.reset} ${c.cyan}${platformNames[CONFIG.platform] || CONFIG.platform}${c.reset}`);
 
-  // Check if platform is supported
   if (!CONFIG.targetDir) {
-    log.warn(chalk.yellow('\n⚠ Unsupported platform. Only macOS and Windows are supported.'));
-    log.info(chalk.gray('  You can still process the template and save it to a custom location.'));
+    console.log(`${c.yellow}\n⚠ Unsupported platform. You can save to a custom location.${c.reset}`);
   }
 
   // Check files
   const checks = await checkFiles();
 
   if (!checks.templateExists || !checks.playerExists) {
-    log.error(chalk.red('\n❌ Required source files are missing!'));
+    console.error(`${c.red}\n❌ Required source files are missing!${c.reset}`);
     process.exit(1);
   }
 
-  // Process the template
+  // Process template
   const result = await processTemplate();
-  
   if (!result) {
-    log.error(chalk.red('\n❌ Template processing failed!'));
+    console.error(`${c.red}\n❌ Template processing failed!${c.reset}`);
     process.exit(1);
   }
 
-  // Check if target directory exists
+  // Handle missing target directory
   if (!checks.targetDirExists) {
-    log.warn(chalk.yellow('\n⚠ Target directory does not exist:'));
-    log.warn(chalk.gray(CONFIG.targetDir));
-    
-    const createDir = await prompt('Would you like to save the processed file in the current directory instead?', true);
+    console.log(`${c.yellow}\n⚠ Target directory does not exist:${c.reset}`);
+    console.log(`${c.gray}${CONFIG.targetDir || 'Not configured'}${c.reset}`);
 
-    if (createDir) {
-      CONFIG.targetDir = __dirname;
-      log.info(chalk.gray('Output will be saved to current directory'));
+    const useCurrentDir = await prompt('Save to current directory instead?', true);
+    if (useCurrentDir) {
+      CONFIG.targetDir = process.cwd();
+      console.log(`${c.gray}Output will be saved to current directory${c.reset}`);
     } else {
-      log.info(chalk.yellow('Operation cancelled'));
+      console.log(`${c.yellow}Operation cancelled${c.reset}`);
       process.exit(0);
     }
   }
 
-  // Show summary and confirm
-  log.info(chalk.blue('\n📋 Summary:'));
-  log.info(chalk.gray('  Source template:'), path.basename(CONFIG.sourceTemplate));
-  log.info(chalk.gray('  Output location:'), CONFIG.targetDir);
-  log.info(chalk.gray('  Output file:'), CONFIG.targetFile);
-  
+  // Summary
+  console.log(`${c.blue}\n📋 Summary:${c.reset}`);
+  console.log(`${c.gray}  Source template:${c.reset}`, path.basename(CONFIG.sourceTemplate));
+  console.log(`${c.gray}  Output location:${c.reset}`, CONFIG.targetDir);
+  console.log(`${c.gray}  Output file:${c.reset}`, CONFIG.targetFile);
+
   if (checks.targetFileExists) {
-    const backupName = getBackupName();
-    log.info(chalk.gray('  Backup file:'), chalk.yellow(backupName));
+    console.log(`${c.gray}  Backup file:${c.reset} ${c.yellow}${getBackupName()}${c.reset}`);
   }
 
-  const confirmReplace = await prompt('Do you want to proceed with replacing the file?', false);
-
-  if (!confirmReplace) {
-    log.info(chalk.yellow('\n⚠ Operation cancelled by user'));
+  // Confirm
+  const confirm = await prompt('Proceed with replacing the file?', false);
+  if (!confirm) {
+    console.log(`${c.yellow}\n⚠ Operation cancelled by user${c.reset}`);
     process.exit(0);
   }
 
-  // Create backup if file exists
+  // Create backup
   const targetPath = path.join(CONFIG.targetDir, CONFIG.targetFile);
   if (fileExists(targetPath)) {
     const backupPath = path.join(CONFIG.targetDir, getBackupName());
     try {
       fs.copyFileSync(targetPath, backupPath);
-      log.info(chalk.green(`\n✓ Backup created: ${path.basename(backupPath)}`));
-    } catch (error) {
-      log.error(chalk.red(`\n✗ Failed to create backup: ${error.message}`));
+      console.log(`${c.green}\n✓ Backup created: ${path.basename(backupPath)}${c.reset}`);
+    } catch (e) {
+      console.error(`${c.red}\n✗ Failed to create backup: ${e.message}${c.reset}`);
       process.exit(1);
     }
   }
 
-  // Write the processed file
+  // Write output
   if (writeFile(targetPath, result.content)) {
-    log.info(chalk.bold.green('\n✨ Success! Template has been processed and saved.'));
-    log.info(chalk.gray(`  File saved to: ${targetPath}`));
+    console.log(`${c.bold}${c.green}\n✨ Success! Template has been processed and saved.${c.reset}`);
+    console.log(`${c.gray}  File saved to: ${targetPath}${c.reset}`);
   } else {
-    log.error(chalk.red('\n❌ Failed to write the processed file'));
+    console.error(`${c.red}\n❌ Failed to write the processed file${c.reset}`);
     process.exit(1);
   }
 }
 
-// Run the script
-main().catch(error => {
-  log.error(chalk.red('\n❌ Unexpected error:'), error.message);
+main().catch(e => {
+  console.error(`${c.red}\n❌ Unexpected error: ${e.message}${c.reset}`);
   process.exit(1);
 });
