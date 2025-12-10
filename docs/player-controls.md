@@ -43,18 +43,44 @@ The advanced Lottie player provides comprehensive playback controls and UI custo
 - Total frame count
 - Color-coded metrics
 
+### Side Panels
+
+#### Segments Panel
+- Lists all animation segments defined by markers
+- Shows segment name, start frame, and end frame
+- Click to select and preview a segment
+- Play Segment button to loop selected segment
+- Reset button to return to full timeline playback
+- Available in both standard and mini mode
+
+#### Custom Elements Panel
+- Automatically scans Lottie SVG for custom IDs
+- Detects shapes, groups, gradients, and text layers
+- Controls available:
+  - **Opacity**: Slider from 0% to 100%
+  - **Fill Color**: Color picker for solid fills
+  - **Stroke Color**: Color picker for strokes
+  - **Stroke Width**: Slider (0-200) with number input
+  - **Gradient Colors**: Individual color pickers for each stop
+  - **Text Content**: Editable text with Apply button
+- Elements with same ID show single control (affects all instances)
+- Refresh button to rescan after animation changes
+- Available in both standard and mini mode
+
 ### UI Modes
 
 #### Standard Mode
 - Full control panel with all features visible
 - Height: 200px
 - All controls accessible
+- Side panels slide in from edges
 
 #### Mini Mode
 - Compact view for space-saving
 - Height: 50px
 - Progress bar only (12px height)
 - Toggle button to expand/collapse
+- Segments and Custom Elements panels available above mini bar
 
 ### Styling
 

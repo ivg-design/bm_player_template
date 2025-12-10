@@ -7,6 +7,8 @@
 ## Technical Documentation
 - [Build Process](build-process.md) - Details about the template build system
 - [Player Controls](player-controls.md) - Advanced Lottie player features
+- [Segments Panel](segments-panel.md) - Animation segments and markers
+- [Custom Elements Panel](custom-elements.md) - Dynamic element control via custom IDs
 - [Subframe Rendering](subframe-rendering.md) - Toggle for fixing rounded corner flickering
 - [Integration Guide](integration-guide.md) - Bodymovin plugin integration
 

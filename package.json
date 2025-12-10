@@ -1,6 +1,6 @@
 {
   "name": "bm-player-template",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Bodymovin player template builder",
   "main": "scripts/build.js",
   "scripts": {

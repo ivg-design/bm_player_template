@@ -7,12 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2025-12-10
+
 ### Added
 - **Custom Elements panel**: New side panel that scans Lottie SVG for custom IDs
-  - Automatically detects shapes, groups, and gradients with custom IDs
-  - Controls for opacity, fill color, stroke color, and stroke width
+  - Automatically detects shapes, groups, gradients, and text layers with custom IDs
+  - Controls for opacity, fill color, stroke color, and stroke width (max 200)
   - Gradient color picker for each stop
+  - Text content editing for Lottie text layers (ty:5)
+  - Number input for precise stroke width control
+  - Apply button and Enter key support for text changes
   - Refresh button to rescan after changes
+- **Mini mode panels**: Segments and Custom Elements panels now available in mini mode
+  - Panels appear above the mini player when opened
+  - Toggle buttons visible in compact view
+
+### Fixed
+- Elements with same ID now show single control (affects all instances)
+- Spacebar no longer triggers play/pause when typing in text inputs
+- Text content changes properly update Lottie animation
+- Fill/stroke/opacity changes apply to all instances with same ID
+- Child element detection for stroke and fill on shape layers inside groups
+
+### Changed
+- Stroke width slider max value increased to 200
+- Improved text layer detection using Lottie animation data (ty:5 layers)
+- Better handling of multiple elements with duplicate IDs
 
 ## [0.3.0] - 2025-12-09
 
@@ -88,7 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaces mock animation data with `__[[ANIMATIONDATA]]__` placeholder
 - Supports Node.js 14+ and yarn package manager
 
-[Unreleased]: https://github.com/ivg-design/bm_player_template/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/ivg-design/bm_player_template/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/ivg-design/bm_player_template/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/ivg-design/bm_player_template/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/ivg-design/bm_player_template/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/ivg-design/bm_player_template/releases/tag/v0.1.0

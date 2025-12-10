@@ -117,7 +117,7 @@
 			.control-panel.collapsed .toggle-btn,
 			.control-panel.mini.collapsed .toggle-btn {
 				position: fixed;
-				bottom: 20px;
+				/* bottom: 20px; */
 				left: 50%;
 				transform: translateX(-50%);
 				top: auto !important;
@@ -1261,13 +1261,27 @@
 				padding: 20px;
 			}
 
-			/* Hide segments panel in mini mode */
+			/* Adjust segments panel for mini mode */
 			.control-panel.mini .segments-panel {
-				display: none;
+				position: absolute;
+				right: auto;
+				left: 50%;
+				transform: translateX(-50%);
+				top: auto;
+				bottom: 100%;
+				margin-bottom: 8px;
+				margin-right: 0;
+				border-radius: 8px;
+				max-height: 300px;
+			}
+
+			.control-panel.mini .segments-panel.open {
+				transform: translateX(-50%) translateY(0);
 			}
 
 			.control-panel.mini .segments-btn {
-				display: none;
+				position: relative;
+				top: auto;
 			}
 
 			/* Custom Elements Button */
@@ -1522,13 +1536,28 @@
 				color: #666;
 			}
 
-			/* Hide elements panel in mini mode */
+			/* Adjust elements panel for mini mode */
 			.control-panel.mini .elements-panel {
-				display: none;
+				position: absolute;
+				right: auto;
+				left: 50%;
+				transform: translateX(-50%) translateY(10px);
+				top: auto;
+				bottom: 100%;
+				margin-bottom: 8px;
+				margin-right: 0;
+				border-radius: 8px;
+				max-height: 300px;
+				max-width: 320px;
+			}
+
+			.control-panel.mini .elements-panel.open {
+				transform: translateX(-50%) translateY(0);
 			}
 
 			.control-panel.mini .elements-btn {
-				display: none;
+				position: relative;
+				top: auto;
 			}
 		</style>
 		<!-- Load Lottie library -->
@@ -2596,6 +2625,93 @@
 				}
 			}
 
+			// Find a Lottie layer by its ln (layer name/ID) property
+			function findLottieLayerById(layerId, layers) {
+				if (!layers) return null;
+				for (let i = 0; i < layers.length; i++) {
+					const layer = layers[i];
+					if (layer.ln === layerId) {
+						return layer;
+					}
+					// Check nested compositions (precomps)
+					if (layer.refId && anim.animationData.assets) {
+						const asset = anim.animationData.assets.find(a => a.id === layer.refId);
+						if (asset && asset.layers) {
+							const found = findLottieLayerById(layerId, asset.layers);
+							if (found) return found;
+						}
+					}
+				}
+				return null;
+			}
+
+			// Get text content from a Lottie text layer
+			function getLottieTextContent(layer) {
+				if (layer && layer.ty === 5 && layer.t && layer.t.d && layer.t.d.k) {
+					const keyframes = layer.t.d.k;
+					if (keyframes.length > 0 && keyframes[0].s) {
+						return keyframes[0].s.t || '';
+					}
+				}
+				return '';
+			}
+
+			// Set text content on a Lottie text layer
+			function setLottieTextContent(layer, newText) {
+				if (!layer || layer.ty !== 5 || !layer.t || !layer.t.d || !layer.t.d.k) {
+					console.log('Invalid text layer:', layer);
+					return;
+				}
+
+				const keyframes = layer.t.d.k;
+				if (keyframes.length === 0 || !keyframes[0].s) {
+					console.log('No keyframes found');
+					return;
+				}
+
+				// Update the text in the animation data
+				keyframes[0].s.t = newText;
+
+				// Store current state
+				const currentFrame = anim.currentFrame;
+				const wasPlaying = !anim.isPaused;
+				const currentSpeed = anim.playSpeed;
+				const currentDirection = anim.playDirection;
+				const currentLoop = anim.loop;
+
+				// Destroy and recreate the animation with updated data
+				const container = document.getElementById('lottie');
+				const animData = anim.animationData;
+
+				anim.destroy();
+
+				anim = lottie.loadAnimation({
+					container: container,
+					renderer: 'svg',
+					loop: currentLoop,
+					autoplay: false,
+					animationData: animData
+				});
+
+				// Restore state
+				anim.setSpeed(currentSpeed);
+				anim.setDirection(currentDirection);
+				anim.goToAndStop(currentFrame, true);
+
+				if (wasPlaying) {
+					anim.play();
+				}
+
+				// Re-apply any gradient modifications
+				if (Object.keys(gradientModifications).length > 0) {
+					requestAnimationFrame(() => {
+						applyGradientModifications();
+					});
+				}
+
+				console.log('Animation recreated with new text:', newText);
+			}
+
 			function scanCustomElements() {
 				const listEl = document.getElementById('elementsList');
 				lottieCustomElements = [];
@@ -2607,24 +2723,36 @@
 					return;
 				}
 
-				// Find all elements with IDs that are not auto-generated
-				const allElements = svg.querySelectorAll('[id]');
-				allElements.forEach(el => {
-					const id = el.id;
-					// Skip auto-generated Lottie IDs
-					if (id.startsWith('__lottie_element_')) return;
+				// Helper to detect fill/stroke on an element, returns found controls
+				function detectFillStroke(element) {
+					const ctrlArray = [];
 
-					// Determine element type and collect info
-					const tagName = el.tagName.toLowerCase();
-					let elementType = 'shape';
-					let controls = [];
+					// Check for fill - if it's a gradient reference, add gradient controls
+					const fill = element.getAttribute('fill');
+					if (fill && fill.startsWith('url(#')) {
+						const gradientId = fill.match(/url\(#(.+)\)/);
+						if (gradientId) {
+							const gradientEl = document.getElementById(gradientId[1]);
+							if (gradientEl) {
+								const stops = gradientEl.querySelectorAll('stop');
+								const stopColors = [];
+								stops.forEach((stop, i) => {
+									const color = stop.getAttribute('stop-color') || '#000000';
+									stopColors.push({ index: i, color: rgbToHex(color) });
+								});
+								ctrlArray.push({ type: 'gradient', gradientId: gradientId[1], stops: stopColors, targetElement: element });
+							}
+						}
+					} else if (fill && fill !== 'none') {
+						ctrlArray.push({ type: 'fill', value: rgbToHex(fill), targetElement: element });
+					}
 
-					// Helper to detect fill/stroke on an element
-					function detectFillStroke(element, ctrlArray) {
-						// Check for fill - if it's a gradient reference, add gradient controls
-						const fill = element.getAttribute('fill');
-						if (fill && fill.startsWith('url(#')) {
-							const gradientId = fill.match(/url\(#(.+)\)/);
+					// Check for stroke
+					const stroke = element.getAttribute('stroke');
+					if (stroke && stroke !== 'none') {
+						// Check if stroke is a gradient
+						if (stroke.startsWith('url(#')) {
+							const gradientId = stroke.match(/url\(#(.+)\)/);
 							if (gradientId) {
 								const gradientEl = document.getElementById(gradientId[1]);
 								if (gradientEl) {
@@ -2634,38 +2762,28 @@
 										const color = stop.getAttribute('stop-color') || '#000000';
 										stopColors.push({ index: i, color: rgbToHex(color) });
 									});
-									ctrlArray.push({ type: 'gradient', gradientId: gradientId[1], stops: stopColors });
+									ctrlArray.push({ type: 'strokeGradient', gradientId: gradientId[1], stops: stopColors, targetElement: element });
 								}
 							}
-						} else if (fill && fill !== 'none') {
-							ctrlArray.push({ type: 'fill', value: rgbToHex(fill) });
+						} else {
+							ctrlArray.push({ type: 'stroke', value: rgbToHex(stroke), targetElement: element });
 						}
-
-						// Check for stroke
-						const stroke = element.getAttribute('stroke');
-						if (stroke && stroke !== 'none') {
-							// Check if stroke is a gradient
-							if (stroke.startsWith('url(#')) {
-								const gradientId = stroke.match(/url\(#(.+)\)/);
-								if (gradientId) {
-									const gradientEl = document.getElementById(gradientId[1]);
-									if (gradientEl) {
-										const stops = gradientEl.querySelectorAll('stop');
-										const stopColors = [];
-										stops.forEach((stop, i) => {
-											const color = stop.getAttribute('stop-color') || '#000000';
-											stopColors.push({ index: i, color: rgbToHex(color) });
-										});
-										ctrlArray.push({ type: 'strokeGradient', gradientId: gradientId[1], stops: stopColors });
-									}
-								}
-							} else {
-								ctrlArray.push({ type: 'stroke', value: rgbToHex(stroke) });
-							}
-							const strokeWidth = element.getAttribute('stroke-width') || '1';
-							ctrlArray.push({ type: 'strokeWidth', value: parseFloat(strokeWidth) });
-						}
+						const strokeWidth = element.getAttribute('stroke-width') || '1';
+						ctrlArray.push({ type: 'strokeWidth', value: parseFloat(strokeWidth), targetElement: element });
 					}
+
+					return ctrlArray;
+				}
+
+				// Helper to process a single element and return its data
+				function processElement(el) {
+					const tagName = el.tagName.toLowerCase();
+					let elementType = 'shape';
+					let controls = [];
+					const id = el.id;
+
+					// Check if this ID corresponds to a Lottie layer
+					const lottieLayer = anim && anim.animationData ? findLottieLayerById(id, anim.animationData.layers) : null;
 
 					if (tagName === 'lineargradient' || tagName === 'radialgradient') {
 						elementType = 'gradient';
@@ -2681,7 +2799,8 @@
 						elementType = 'text';
 						const opacityCtrl = findOpacityController(el);
 						controls.push({ type: 'opacity', value: opacityCtrl.value, opacityController: opacityCtrl });
-						detectFillStroke(el, controls);
+						const fillStrokeControls = detectFillStroke(el);
+						controls.push(...fillStrokeControls);
 						// Add text content control
 						const textContent = el.textContent || '';
 						if (textContent.trim()) {
@@ -2692,24 +2811,101 @@
 						elementType = 'group';
 						const opacityCtrl = findOpacityController(el);
 						controls.push({ type: 'opacity', value: opacityCtrl.value, opacityController: opacityCtrl });
-						// Check if group has fill/stroke (sometimes set on groups)
-						detectFillStroke(el, controls);
+
+						// Check if group itself has fill/stroke
+						const groupFillStroke = detectFillStroke(el);
+						controls.push(...groupFillStroke);
+
+						// Check if this is a text layer (ty:5 in Lottie data)
+						if (lottieLayer && lottieLayer.ty === 5) {
+							elementType = 'text';
+							const textContent = getLottieTextContent(lottieLayer);
+							if (textContent) {
+								controls.push({ type: 'textContent', value: textContent, lottieLayer: lottieLayer });
+							}
+						} else {
+							// Scan children for stroke/fill (shape layers render fill/stroke on child paths)
+							const childShapes = el.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon');
+							const foundFills = new Set();
+							const foundStrokes = new Set();
+							const foundStrokeWidths = new Set();
+
+							childShapes.forEach(child => {
+								const childControls = detectFillStroke(child);
+								childControls.forEach(ctrl => {
+									// Avoid duplicate controls (same gradient ID, same color, etc.)
+									if (ctrl.type === 'gradient' || ctrl.type === 'strokeGradient') {
+										const key = ctrl.gradientId;
+										if (ctrl.type === 'gradient' && !foundFills.has(key)) {
+											foundFills.add(key);
+											controls.push(ctrl);
+										} else if (ctrl.type === 'strokeGradient' && !foundStrokes.has(key)) {
+											foundStrokes.add(key);
+											controls.push(ctrl);
+										}
+									} else if (ctrl.type === 'fill') {
+										if (!foundFills.has(ctrl.value)) {
+											foundFills.add(ctrl.value);
+											controls.push(ctrl);
+										}
+									} else if (ctrl.type === 'stroke') {
+										if (!foundStrokes.has(ctrl.value)) {
+											foundStrokes.add(ctrl.value);
+											controls.push(ctrl);
+										}
+									} else if (ctrl.type === 'strokeWidth') {
+										if (!foundStrokeWidths.has(ctrl.value)) {
+											foundStrokeWidths.add(ctrl.value);
+											controls.push(ctrl);
+										}
+									}
+								});
+							});
+						}
 
 					} else if (tagName === 'path' || tagName === 'rect' || tagName === 'circle' || tagName === 'ellipse' || tagName === 'line' || tagName === 'polyline' || tagName === 'polygon') {
 						elementType = 'shape';
 						const opacityCtrl = findOpacityController(el);
 						controls.push({ type: 'opacity', value: opacityCtrl.value, opacityController: opacityCtrl });
-						detectFillStroke(el, controls);
+						const fillStrokeControls = detectFillStroke(el);
+						controls.push(...fillStrokeControls);
 					}
+
+					return { elementType, controls, lottieLayer, tagName };
+				}
+
+				// Find all elements with IDs that are not auto-generated
+				// Group by ID to handle multiple instances
+				const allElements = svg.querySelectorAll('[id]');
+				const elementsByID = new Map();
+
+				allElements.forEach(el => {
+					const id = el.id;
+					// Skip auto-generated Lottie IDs
+					if (id.startsWith('__lottie_element_')) return;
+
+					if (!elementsByID.has(id)) {
+						elementsByID.set(id, []);
+					}
+					elementsByID.get(id).push(el);
+				});
+
+				// Process each unique ID (only once, even if multiple instances exist)
+				elementsByID.forEach((elements, id) => {
+					// Use the first visible element for initial values, or just the first one
+					const primaryEl = elements[0];
+					const { elementType, controls, lottieLayer, tagName } = processElement(primaryEl);
 
 					// Only add elements that have controls
 					if (controls.length > 0) {
 						lottieCustomElements.push({
 							id: id,
-							element: el,
+							element: primaryEl,
+							elements: elements, // Store all instances for batch updates
 							type: elementType,
 							tagName: tagName,
-							controls: controls
+							controls: controls,
+							lottieLayer: lottieLayer
 						});
 					}
 				});
@@ -2796,7 +2992,7 @@
 
 					let controlsHTML = '';
 
-					item.controls.forEach(ctrl => {
+					item.controls.forEach((ctrl, ctrlIndex) => {
 						if (ctrl.type === 'opacity') {
 							controlsHTML += `
 								<div class="element-control-row">
@@ -2811,7 +3007,7 @@
 								<div class="element-control-row">
 									<span class="element-control-label">Fill</span>
 									<input type="color" class="element-control-input" value="${ctrl.value}"
-										onchange="updateElementFill('${item.id}', this.value)">
+										onchange="updateElementFill(${index}, ${ctrlIndex}, this.value)">
 									<span class="element-control-value">${ctrl.value}</span>
 								</div>
 							`;
@@ -2820,7 +3016,7 @@
 								<div class="element-control-row">
 									<span class="element-control-label">Stroke</span>
 									<input type="color" class="element-control-input" value="${ctrl.value}"
-										onchange="updateElementStroke('${item.id}', this.value)">
+										onchange="updateElementStroke(${index}, ${ctrlIndex}, this.value)">
 									<span class="element-control-value">${ctrl.value}</span>
 								</div>
 							`;
@@ -2828,9 +3024,13 @@
 							controlsHTML += `
 								<div class="element-control-row">
 									<span class="element-control-label">Width</span>
-									<input type="range" class="element-control-input" min="0" max="20" step="0.5" value="${ctrl.value}"
-										onchange="updateElementStrokeWidth('${item.id}', this.value)" oninput="this.nextElementSibling.textContent = this.value + 'px'">
-									<span class="element-control-value">${ctrl.value}px</span>
+									<input type="range" class="element-control-input stroke-width-slider" min="0" max="200" step="0.5" value="${ctrl.value}"
+										onchange="updateElementStrokeWidth(${index}, ${ctrlIndex}, this.value)"
+										oninput="this.nextElementSibling.value = this.value">
+									<input type="number" class="element-control-input stroke-width-number" min="0" max="200" step="0.5" value="${ctrl.value}"
+										onchange="updateElementStrokeWidth(${index}, ${ctrlIndex}, this.value)"
+										oninput="this.previousElementSibling.value = this.value"
+										style="width: 60px; text-align: center;">
 								</div>
 							`;
 						} else if (ctrl.type === 'gradient' || ctrl.type === 'strokeGradient') {
@@ -2855,10 +3055,15 @@
 							`;
 						} else if (ctrl.type === 'textContent') {
 							controlsHTML += `
-								<div class="element-control-row">
+								<div class="element-control-row" style="flex-wrap: wrap;">
 									<span class="element-control-label">Text</span>
-									<input type="text" class="element-control-input" value="${ctrl.value.replace(/"/g, '&quot;')}"
-										onchange="updateElementText('${item.id}', this.value)">
+									<input type="text" class="element-control-input text-content-input"
+										data-element-index="${index}"
+										value="${ctrl.value.replace(/"/g, '&quot;')}"
+										onkeydown="if(event.key==='Enter'){updateElementText(${index}, this.value); event.preventDefault();}"
+										style="flex: 1; min-width: 100px;">
+									<button class="element-apply-btn" onclick="updateElementText(${index}, this.previousElementSibling.value)"
+										style="padding: 2px 8px; margin-left: 4px; font-size: 10px; cursor: pointer; background: #4a4a4a; border: 1px solid #666; border-radius: 3px; color: #fff;">Apply</button>
 								</div>
 							`;
 						}
@@ -2887,41 +3092,131 @@
 				if (!opacityCtrl || !opacityCtrl.opacityController) return;
 
 				const controller = opacityCtrl.opacityController;
-				const targetEl = controller.element;
+				const attrName = controller.attrName || 'opacity';
 
-				if (controller.useAttribute) {
-					const attrName = controller.attrName || 'opacity';
-					targetEl.setAttribute(attrName, value);
-				}
-				// Also set style for immediate visual feedback
-				targetEl.style.opacity = value;
+				// Get all elements with this ID (handles multiple instances)
+				const allElements = document.querySelectorAll('[id="' + item.id + '"]');
+				allElements.forEach(el => {
+					// Find the equivalent opacity controller for this instance
+					// Check element itself first
+					if (el.getAttribute('opacity') !== null || el.style.opacity !== '') {
+						if (controller.useAttribute) {
+							el.setAttribute(attrName, value);
+						}
+						el.style.opacity = value;
+					} else {
+						// Check immediate parent
+						const parent = el.parentElement;
+						if (parent && parent.tagName.toLowerCase() === 'g') {
+							if (controller.useAttribute) {
+								parent.setAttribute(attrName, value);
+							}
+							parent.style.opacity = value;
+						} else {
+							// Fallback: set on element itself
+							el.style.opacity = value;
+						}
+					}
+				});
 			}
 
-			function updateElementFill(id, value) {
-				const el = document.getElementById(id);
-				if (el) {
-					el.setAttribute('fill', value);
-				}
+			function updateElementFill(elementIndex, ctrlIndex, value) {
+				const item = lottieCustomElements[elementIndex];
+				if (!item) return;
+				const ctrl = item.controls[ctrlIndex];
+
+				// Get all elements with this ID (handles multiple instances)
+				const allElements = document.querySelectorAll('[id="' + item.id + '"]');
+				allElements.forEach(el => {
+					// If control has a targetElement, it means fill is on child - find equivalent child
+					if (ctrl && ctrl.targetElement) {
+						// Find all children with same fill attribute pattern
+						const children = el.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon');
+						children.forEach(child => {
+							const currentFill = child.getAttribute('fill');
+							if (currentFill && currentFill !== 'none' && !currentFill.startsWith('url(')) {
+								child.setAttribute('fill', value);
+							}
+						});
+					} else {
+						el.setAttribute('fill', value);
+					}
+				});
 			}
 
-			function updateElementStroke(id, value) {
-				const el = document.getElementById(id);
-				if (el) {
-					el.setAttribute('stroke', value);
-				}
+			function updateElementStroke(elementIndex, ctrlIndex, value) {
+				const item = lottieCustomElements[elementIndex];
+				if (!item) return;
+				const ctrl = item.controls[ctrlIndex];
+
+				// Get all elements with this ID (handles multiple instances)
+				const allElements = document.querySelectorAll('[id="' + item.id + '"]');
+				allElements.forEach(el => {
+					// If control has a targetElement, it means stroke is on child - find equivalent children
+					if (ctrl && ctrl.targetElement) {
+						const children = el.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon');
+						children.forEach(child => {
+							const currentStroke = child.getAttribute('stroke');
+							if (currentStroke && currentStroke !== 'none' && !currentStroke.startsWith('url(')) {
+								child.setAttribute('stroke', value);
+							}
+						});
+					} else {
+						el.setAttribute('stroke', value);
+					}
+				});
 			}
 
-			function updateElementStrokeWidth(id, value) {
-				const el = document.getElementById(id);
-				if (el) {
-					el.setAttribute('stroke-width', value);
-				}
+			function updateElementStrokeWidth(elementIndex, ctrlIndex, value) {
+				const item = lottieCustomElements[elementIndex];
+				if (!item) return;
+				const ctrl = item.controls[ctrlIndex];
+
+				// Get all elements with this ID (handles multiple instances)
+				const allElements = document.querySelectorAll('[id="' + item.id + '"]');
+				allElements.forEach(el => {
+					// If control has a targetElement, it means stroke-width is on child - find equivalent children
+					if (ctrl && ctrl.targetElement) {
+						const children = el.querySelectorAll('path, rect, circle, ellipse, line, polyline, polygon');
+						children.forEach(child => {
+							const currentStroke = child.getAttribute('stroke');
+							if (currentStroke && currentStroke !== 'none') {
+								child.setAttribute('stroke-width', value);
+							}
+						});
+					} else {
+						el.setAttribute('stroke-width', value);
+					}
+				});
 			}
 
-			function updateElementText(id, value) {
-				const el = document.getElementById(id);
-				if (el) {
-					el.textContent = value;
+			function updateElementText(elementIndex, value) {
+				const item = lottieCustomElements[elementIndex];
+				if (!item) {
+					console.error('updateElementText: item not found at index', elementIndex);
+					return;
+				}
+
+				// Check if this text control has a Lottie layer reference
+				const textCtrl = item.controls.find(c => c.type === 'textContent');
+
+				// Try textCtrl.lottieLayer first
+				if (textCtrl && textCtrl.lottieLayer) {
+					setLottieTextContent(textCtrl.lottieLayer, value);
+					console.log('Text updated via textCtrl.lottieLayer');
+				}
+				// Fallback: try item.lottieLayer (for text layers detected via ID)
+				else if (item.lottieLayer && item.lottieLayer.ty === 5) {
+					setLottieTextContent(item.lottieLayer, value);
+					console.log('Text updated via item.lottieLayer');
+				}
+				// Fallback: update DOM elements directly
+				else {
+					const allElements = document.querySelectorAll('[id="' + item.id + '"]');
+					allElements.forEach(el => {
+						el.textContent = value;
+					});
+					console.log('Text updated via DOM');
 				}
 			}
 
@@ -3162,6 +3457,11 @@
 
 			// Keyboard shortcuts
 			document.addEventListener('keydown', function (e) {
+				// Don't trigger shortcuts when typing in inputs
+				const activeEl = document.activeElement;
+				const isInput = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable);
+				if (isInput) return;
+
 				if (e.code === 'Space') {
 					e.preventDefault();
 					togglePlay();
